@@ -7,11 +7,36 @@ import { envs } from '../config/Envs.js';
 // 1. AÑADIDO: Incluir 'jefe' y 'asesor' en los roles permitidos
 const ROLES_PERMITIDOS = ['admin', 'jefe', 'asesor', 'usuario', 'bot'];
 
+/**
+ * @file LoginController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de autenticación
+ * y administración de empleados, incluyendo registro, inicio de sesión,
+ * actualización y eliminación de usuarios.
+ * 
+ * Funcionalidades:
+ * - Registro de empleados.
+ * - Inicio de sesión.
+ * - Generación de tokens JWT.
+ * - Actualización de empleados.
+ * - Eliminación de empleados.
+ */
 export class LoginController {
 
-  // =========================================================
-  // REGISTRO DE EMPLEADOS
-  // =========================================================
+   /**
+   * Registra un nuevo empleado en el sistema.
+   *
+   * Valida la información recibida, verifica que el correo electrónico no exista previamente, encripta la contraseña
+   * y almacena el usuario en la base de datos.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP con los datos del empleado.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado del proceso de registro.
+   *
+   * @throws {Error} Cuando ocurre un error durante el registro del empleado.
+   */
   static async createLogin(req: Request, res: Response) {
     const { nombre, apellido, telefono, email, estado, password, rol } = req.body;
 
@@ -73,9 +98,20 @@ export class LoginController {
     }
   }
 
-  // =========================================================
-  // LOGIN / AUTENTICACIÓN
-  // =========================================================
+  /**
+   * Autentica un empleado en el sistema.
+   *
+   * Verifica la existencia del usuario, valida el estado de la cuenta, compara la contraseña utilizando bcrypt y genera un token JWT
+   * para la sesión autenticada.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP con las credenciales del usuario.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Token JWT e información del usuario autenticado.
+   *
+   * @throws {Error} Cuando ocurre un error durante el proceso de autenticación.
+   */
   static async BringLogin(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
@@ -147,9 +183,19 @@ export class LoginController {
     }
   }
 
-  // =========================================================
-  // ACTUALIZAR EMPLEADO
-  // =========================================================
+  /**
+   * Actualiza la información de un empleado.
+   *
+   * Permite modificar el nombre, estado y rol de un empleado previamente registrado en el sistema.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP con el identificador y los nuevos datos.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la actualización.
+   *
+   * @throws {Error} Cuando ocurre un error durante la actualización del empleado.
+   */
   static async updateLogin(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -185,9 +231,19 @@ export class LoginController {
     }
   }
 
-  // =========================================================
-  // ELIMINAR EMPLEADO
-  // =========================================================
+  /**
+   * Elimina un empleado del sistema.
+   *
+   * Remueve permanentemente el registro de un empleado identificado mediante su id.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador del empleado.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la eliminación.
+   *
+   * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+   */
   static async deleteLogin(req: Request, res: Response) {
     try {
       const { id } = req.params;

@@ -18,11 +18,36 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/**
+ * @file RecuperacionController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la recuperación y restablecimiento
+ * de contraseñas de empleados mediante el uso de tokens temporales y envío
+ * de solicitudes al área de informática.
+ *
+ * Funcionalidades:
+ * - Solicitud de recuperación de contraseña.
+ * - Generación de tokens temporales.
+ * - Envío de solicitudes al área de informática.
+ * - Restablecimiento de contraseñas.
+ *
+ * @class RecuperacionController
+ */
 export class RecuperacionController {
 
   /**
-   * Recibe el correo del usuario que requiere el restablecimiento,
-   * valida su existencia en MySQL y envía el token de cambio con enlace visible AL CORREO DE INFORMÁTICA.
+   * Procesa una solicitud de recuperación de contraseña.
+   *
+   * Verifica que el correo electrónico exista en el sistema, genera un token temporal de recuperación, lo almacena
+   * en la base de datos y envía una notificación al área de informática con el enlace de restablecimiento.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el correo electrónico del usuario.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado del proceso de recuperación.
+   *
+   * @throws {Error} Cuando ocurre un error durante la generación del token, el acceso a la base de datos o el envío del correo electrónico.
    */
   static async SolicitarRecuperacion(req: Request, res: Response) {
     try {
@@ -102,8 +127,20 @@ export class RecuperacionController {
   }
 
   /**
-   * Consume el token enviado desde React, valida su vigencia en MySQL y
-   * actualiza la columna 'Password_hash' para establecer la nueva contraseña.
+   * Restablece la contraseña de un usuario utilizando un token válido.
+   *
+   * Verifica que el token exista y no haya expirado, genera el hash de la nueva contraseña y actualiza
+   * la información del usuario en la base de datos. Posteriormente elimina los datos de recuperación
+   * para evitar reutilizaciones del enlace.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el token y la nueva contraseña.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado del proceso de restablecimiento.
+   *
+   * @throws {Error} Cuando ocurre un error durante la validación del token,
+   * el cifrado de la contraseña o la actualización de la base de datos.
    */
   static async RestablecerPassword(req: Request, res: Response) {
     try {

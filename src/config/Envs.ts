@@ -1,6 +1,11 @@
 import 'dotenv/config';
 
-
+/**
+ * @author Juan David Nieto
+ * @file Configuración global de variables de entorno de la aplicación.
+ * @description Este objeto centraliza el acceso a las variables definidas en el archivo .env y proporciona
+ * valores por defecto cuando dichas variables no están configuradas.
+ */
 export const envs ={
     PORT: Number(process.env.PORT) || 3000,
     JWT_SECRET: process.env.JWT_SECRET || 'default_secret',

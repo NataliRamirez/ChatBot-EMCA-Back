@@ -1,11 +1,33 @@
 import { Request, Response } from "express";
 import { db } from "../config/db.js";
 
+/**
+ * @file bitacorasController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de bitácoras del sistema,
+ * permitiendo crear, consultar, actualizar y eliminar registros.
+ * 
+* Funcionalidades:
+ * - Creación de bitácoras.
+ * - Consulta de bitácoras registradas.
+ * - Actualización de información de bitácoras.
+ * - Eliminación de bitácoras.
+ */
 export class bitacorasController {
 
-    // ==========================
-    // CREAR BITÁCORA
-    // ==========================
+    /**
+     * Crea una nueva bitácora en el sistema.
+     *
+     * Registra la información suministrada por el usuario y la almacena en la base de datos.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene los datos de la bitácora.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Mensaje indicando el resultado de la operación.
+     *
+     * @throws {Error} Cuando ocurre un error durante el registro de la bitácora.
+     */
     static async CreateBitacoras(req: Request, res: Response) {
 
         try {
@@ -60,9 +82,19 @@ export class bitacorasController {
 
     }
 
-    // ==========================
-    // LISTAR BITÁCORAS
-    // ==========================
+     /**
+     * Consulta todas las bitácoras registradas en el sistema.
+     *
+     * Obtiene el listado completo de bitácoras ordenadas de forma descendente según su identificador.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de bitácoras registradas.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta de datos.
+     */
     static async BringBitacoras(req: Request, res: Response) {
 
         try {
@@ -87,9 +119,19 @@ export class bitacorasController {
 
     }
 
-    // ==========================
-    // ACTUALIZAR BITÁCORA
-    // ==========================
+    /**
+     * Actualiza la información de una bitácora existente.
+     *
+     * Modifica los datos asociados a una bitácora específica identificada mediante su id.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Mensaje indicando el resultado de la actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante la actualización de la bitácora.
+     */
     static async UpdateBitacoras(req: Request, res: Response) {
 
         try {
@@ -146,9 +188,19 @@ export class bitacorasController {
 
     }
 
-    // ==========================
-    // ELIMINAR BITÁCORA
-    // ==========================
+     /**
+     * Elimina una bitácora del sistema.
+     *
+     * Remueve de forma permanente el registro correspondiente al identificador recibido en la solicitud.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador de la bitácora.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Mensaje indicando el resultado de la eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante la eliminación de la bitácora.
+     */
     static async DeleteBitacoras(req: Request, res: Response) {
 
         try {

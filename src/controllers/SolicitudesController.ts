@@ -1,11 +1,38 @@
 import { Request, Response } from "express";
 import { db } from "../config/db.js";
 
+/**
+ * @file SolicitudesController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de solicitudes del sistema,
+ * permitiendo crear, consultar, actualizar, asignar y eliminar solicitudes
+ * almacenadas en la base de datos.
+ *
+ * Funcionalidades:
+ * - Consulta de solicitudes.
+ * - Consulta de solicitudes por identificador.
+ * - Creación de solicitudes.
+ * - Actualización de solicitudes.
+ * - Asignación de solicitudes.
+ * - Eliminación de solicitudes.
+ *
+ * @class SolicitudesController
+ */
 export class SolicitudesController {
 
-    // ==================================================
-    // Crear solicitud
-    // ==================================================
+     /**
+     * Registra una nueva solicitud en el sistema.
+     *
+     * Valida los campos obligatorios y almacena la información correspondiente en la base de datos.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene los datos de la solicitud.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la operación de registro.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de inserción.
+     */
     static async CreateSolicitudes(req: Request, res: Response) {
 
         try {
@@ -71,9 +98,19 @@ export class SolicitudesController {
 
     }
 
-    // ==================================================
-    // Obtener todas las solicitudes
-    // ==================================================
+    /**
+     * Obtiene el listado completo de solicitudes registradas.
+     *
+     * Consulta todas las solicitudes almacenadas en la base de datos y las retorna ordenadas de forma descendente por identificador.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de solicitudes registradas.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta.
+     */
     static async BringSolicitudes(req: Request, res: Response) {
 
         try {
@@ -96,9 +133,19 @@ export class SolicitudesController {
 
     }
 
-    // ==================================================
-    // Obtener una solicitud por ID
-    // ==================================================
+    /**
+     * Obtiene la información de una solicitud específica.
+     *
+     * Realiza la búsqueda de una solicitud mediante su identificador y retorna la información correspondiente.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID de la solicitud.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Información de la solicitud encontrada.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta.
+     */
     static async BringSolicitud(req: Request, res: Response) {
 
         try {
@@ -130,9 +177,19 @@ export class SolicitudesController {
 
     }
 
-    // ==================================================
-    // Actualizar solicitud
-    // ==================================================
+    /**
+     * Actualiza la información de una solicitud existente.
+     *
+     * Modifica los datos asociados a una solicitud previamente registrada utilizando el identificador recibido como parámetro.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado del proceso de actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante la actualización de la información.
+     */
     static async UpdateSolicitudes(req: Request, res: Response) {
 
         try {
@@ -192,9 +249,19 @@ export class SolicitudesController {
 
     }
 
-    // ==================================================
-    // Eliminar solicitud
-    // ==================================================
+    /**
+     * Elimina una solicitud registrada en el sistema.
+     *
+     * Realiza la eliminación permanente de una solicitud utilizando el identificador recibido en la solicitud.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID de la solicitud.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado del proceso de eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante la eliminación.
+     */
     static async DeleteSolicitudes(req: Request, res: Response) {
 
         try {
@@ -228,9 +295,19 @@ export class SolicitudesController {
 
     }
 
-    // ==================================================
-    // Asignar solicitud
-    // ==================================================
+     /**
+     * Asigna una solicitud a un responsable dentro del sistema.
+     *
+     * Permite actualizar el nombre del responsable, el estado y las observaciones asociadas a una solicitud existente.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID de la solicitud y los datos de asignación.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado del proceso de asignación.
+     *
+     * @throws {Error} Cuando ocurre un error durante la asignación de la solicitud.
+     */
     static async CreateAsignarSolicitud(req: Request, res: Response) {
 
         try {

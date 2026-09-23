@@ -1,11 +1,35 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+/**
+ * @file respuestasController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de respuestas del sistema, permitiendo crear, consultar, actualizar y eliminar respuestas almacenadas
+ * en la base de datos.
+ *
+ * Funcionalidades:
+ * - Consulta de respuestas.
+ * - Creación de respuestas.
+ * - Actualización de respuestas.
+ * - Eliminación de respuestas.
+ *
+ * @class respuestasController
+ */
 export class respuestasController {
 
-    // =====================================================
-    // OBTENER TODAS LAS RESPUESTAS
-    // =====================================================
+     /**
+     * Obtiene todas las respuestas registradas en el sistema.
+     *
+     * Consulta la información almacenada en la tabla respuestas y retorna los registros ordenados de forma descendente por ID.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de respuestas registradas.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta a la base de datos.
+     */
     static async BringRespuestas(req: Request, res: Response) {
         try {
 
@@ -28,9 +52,19 @@ export class respuestasController {
         }
     }
 
-    // =====================================================
-    // CREAR RESPUESTA
-    // =====================================================
+    /**
+     * Registra una nueva respuesta en el sistema.
+     *
+     * Valida que todos los campos obligatorios estén presentes antes de almacenar la información en la base de datos.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene los datos de la respuesta.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la operación de registro.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de inserción.
+     */
     static async CreateRespuestas(req: Request, res: Response) {
 
         try {
@@ -79,9 +113,19 @@ export class respuestasController {
         }
     }
 
-    // =====================================================
-    // ACTUALIZAR RESPUESTA
-    // =====================================================
+    /**
+     * Actualiza una respuesta existente.
+     *
+     * Modifica la información de una respuesta previamente registrada utilizando el identificador recibido como parámetro.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante la actualización de la información.
+     */
     static async UpdateRespuestas(req: Request, res: Response) {
 
         try {
@@ -103,9 +147,19 @@ export class respuestasController {
         }
     }
 
-    // =====================================================
-    // ELIMINAR RESPUESTA
-    // =====================================================
+    /**
+     * Elimina una respuesta registrada en el sistema.
+     *
+     * Realiza la eliminación permanente de una respuesta utilizando el identificador recibido en la solicitud.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID de la respuesta.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+     */
     static async DeleteRespuestas(req: Request, res: Response) {
 
         try {

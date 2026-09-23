@@ -1,9 +1,34 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+/**
+ * @file ComprobanteController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de comprobantes,
+ * permitiendo registrar, consultar, actualizar y eliminar comprobantes
+ * asociados a los empleados del sistema.
+ * 
+ * Funcionalidades:
+ * - Registro de comprobantes.
+ * - Consulta de comprobantes.
+ * - Actualización de comprobantes.
+ * - Eliminación de comprobantes.
+ */
 export class ComprobanteController {
 
-    // Crear un nuevo comprobante
+    /**
+     * Crea un nuevo comprobante en el sistema.
+     *
+     * Valida los datos obligatorios y registra un comprobante asociado opcionalmente a un empleado.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene los datos del comprobante.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la operación de registro.
+     *
+     * @throws {Error} Cuando ocurre un error durante el almacenamiento del comprobante.
+     */
     static async CreateComprobante(req: Request, res: Response) {
         try {
             const { codigo, tipo, descripcion, monto, id_empleado } = req.body;
@@ -26,7 +51,19 @@ export class ComprobanteController {
         }
     }
 
-    // Obtener la lista de comprobantes
+    /**
+     * Obtiene el listado de comprobantes registrados.
+     *
+     * Consulta los comprobantes almacenados en la base de datos junto con la información básica del empleado asociado.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de comprobantes registrados.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta de datos.
+     */
     static async BringComprobante(req: Request, res: Response) {
         try {
             const query = `
@@ -48,7 +85,19 @@ export class ComprobanteController {
         }
     }
 
-    // Actualizar un comprobante existente
+    /**
+     * Actualiza la información de un comprobante existente.
+     *
+     * Modifica los datos de un comprobante identificado mediante su identificador único.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP con el identificador y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de actualización.
+     */
     static async UpdateComprobante(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -72,7 +121,19 @@ export class ComprobanteController {
         }
     }
 
-    // Eliminar un comprobante
+    /**
+     * Elimina un comprobante del sistema.
+     *
+     * Remueve de forma permanente el comprobante asociado al identificador recibido en la solicitud.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador del comprobante.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante la eliminación del comprobante.
+     */
     static async DeleteComprobante(req: Request, res: Response) {
         try {
             const { id } = req.params;

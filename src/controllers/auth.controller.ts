@@ -3,8 +3,36 @@ import { db } from '../config/db.js';
 import bcrypt from 'bcrypt'; 
 import jwt from 'jsonwebtoken';
 
-
+/**
+ * @file authController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la autenticación y registro de empleados,
+ * permitiendo el inicio de sesión, registro de usuarios y generación de tokens JWT.
+ * 
+ * Funcionalidades:
+ * - Inicio de sesión mediante correo electrónico y contraseña.
+ * - Registro de nuevos empleados con rol de usuario.
+ * - Generación de tokens JWT para usuarios autenticados.
+ *
+ * @class authController
+ */
 export class  authController   {
+
+    /**
+     * Autentica un empleado en el sistema.
+     *
+     * Verifica que el usuario exista, valida la contraseña
+     * almacenada mediante bcrypt y genera un token JWT
+     * para la sesión autenticada.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene las credenciales del usuario.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Respuesta con el token JWT y los datos básicos del empleado.
+     *
+     * @throws {Error} Cuando ocurre un error durante la autenticación o el acceso a la base de datos.
+     */
      static async login(req: Request, res: Response) {
         try {
           const { email, password } = req.body;
@@ -61,7 +89,20 @@ export class  authController   {
         }
       }
     
-      // REGISTER
+       /**
+     * Registra un nuevo empleado en el sistema.
+     *
+     * Recibe los datos personales del usuario, encripta la contraseña utilizando bcrypt y almacena la 
+     * información en la base de datos con el rol predeterminado "usuario".
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene la información del nuevo empleado.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Respuesta indicando el resultado del registro.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de registro o inserción en la base de datos.
+     */
       static async register(req: Request, res: Response) {
         try {
           const {

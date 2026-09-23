@@ -4,6 +4,14 @@ import { guardarMensaje as guardarMensajeDB, checkUserInDB, registrarUsuario } f
 import { type RowDataPacket } from 'mysql2'
 import { MultimediaDTO, type MultimediaRow } from '../dtos/dtos.js'
 
+/**
+ * @file BotController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de las operaciones relacionadas con el chatbot, 
+ * incluyendo la recepción de mensajes, gestión de usuarios, almacenamiento de conversaciones, consulta
+ * de historial y comunicación con asesores humanos.
+ */
+
 interface UsuarioRow extends RowDataPacket {
   nombres: string
   telefono: string
@@ -12,7 +20,6 @@ interface UsuarioRow extends RowDataPacket {
   email: string | null
 }
 
-// Helper para forzar timeout en promesas de base de datos / servicios
 const withTimeout = <T>(promise: Promise<T>, ms = 8000): Promise<T> => {
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error(`Database/Service timeout after ${ms}ms`)), ms)
@@ -20,11 +27,33 @@ const withTimeout = <T>(promise: Promise<T>, ms = 8000): Promise<T> => {
   return Promise.race([promise, timeout])
 }
 
+/**
+ * Controlador encargado de la gestión de las funcionalidades del chatbot.
+ *
+ * Funcionalidades:
+ * - Recepción de mensajes desde Meta WhatsApp.
+ * - Registro y consulta de usuarios.
+ * - Almacenamiento de mensajes y conversaciones.
+ * - Consulta de historial de chat.
+ * - Solicitud de atención por asesor humano.
+ * - Activación y desactivación del bot.
+ * - Gestión de acciones internas del chatbot.
+ */
 export class BotController {
 
-  // =========================================================
-  // WEBHOOK META
-  // =========================================================
+  /**
+ * Procesa los eventos recibidos desde el webhook de Meta WhatsApp.
+ *
+ * Recibe los mensajes enviados por los usuarios, extrae la información
+ * relevante y registra los mensajes en la base de datos.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP enviada por Meta.
+ * @param {Response} res Respuesta HTTP enviada al proveedor.
+ * @returns {Promise<Response>} Confirmación de recepción del evento.
+ * @throws {Error} Cuando ocurre un error durante el procesamiento del webhook.
+ */
   static async metaWebhook(req: Request, res: Response) {
     try {
       const body = req.body
@@ -49,9 +78,18 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // ACCIONES DEL BOT (MULTI-ACTION)
-  // =========================================================
+  /**
+ * Gestiona las acciones ejecutadas por el chatbot.
+ *
+ * Permite procesar diferentes tipos de acciones como almacenamiento de mensajes y registro de usuarios.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con la acción solicitada.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Resultado de la acción ejecutada.
+ * @throws {Error} Cuando ocurre un error durante el procesamiento.
+ */
   static async handleBotAction(req: Request, res: Response) {
     console.log('🚀 handleBotAction ejecutándose')
 
@@ -111,76 +149,95 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // ENDPOINT DEDICADO: GUARDAR MENSAJE (/v1/messages/guardar)
-  // =========================================================
- static async guardarMensaje(req: Request, res: Response) {
-  try {
-    const apiKey = String(req.headers['x-api-key'] || '')
-    if (apiKey !== (process.env.API_KEY || 'EmcaSecret2026')) {
-      return res.status(401).json({ error: 'No autorizado' })
-    }
-
-    const {
-      telefono = '',
-      mensaje = '',
-      emisor = 'USUARIO',
-      tipo_mensaje = 'TEXTO',
-      url_media = '',
-      botones = []
-    } = req.body
-
-    if (!telefono) {
-      return res.status(400).json({ error: 'El teléfono es obligatorio' })
-    }
-
-    const telLimpio = String(telefono).replace(/\D/g, '')
-    const botonesJson = JSON.stringify(Array.isArray(botones) ? botones : [])
-    
-    // Normalización del texto visible para el chat de usuario
-    const textoFinal = mensaje && mensaje.trim() !== '' 
-      ? mensaje 
-      : (url_media ? 'Archivo adjunto' : ' ')
-
-    const [result]: any = await withTimeout(
-      db.execute(
-        `INSERT INTO mensajes (telefono_usuario, mensaje, emisor, botones, url_media, tipo_mensaje, fecha)
-         VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-        [telLimpio, textoFinal, emisor, botonesJson, url_media, tipo_mensaje]
-      ),
-      5000
-    )
-
-    // 🟢 EMITIR EVENTO EN TIEMPO REAL VÍA SOCKET.IO
-    const io = req.app.get('io')
-    if (io) {
-      const nuevoMensaje = {
-        id: result.insertId,
-        telefono_usuario: telLimpio,
-        mensaje: textoFinal,
-        emisor,
-        botones: Array.isArray(botones) ? botones : [],
-        url_media,
-        tipo_mensaje,
-        fecha: new Date().toISOString()
+  /**
+ * Guarda un mensaje dentro del historial de conversaciones.
+ *
+ * Registra mensajes de usuarios o del bot, incluyendo archivos adjuntos, botones interactivos y metadatos asociados.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con la información del mensaje.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Confirmación del almacenamiento.
+ * @throws {Error} Cuando ocurre un error durante el registro del mensaje.
+ */
+  static async guardarMensaje(req: Request, res: Response) {
+    try {
+      const apiKey = String(req.headers['x-api-key'] || '')
+      if (apiKey !== (process.env.API_KEY || 'EmcaSecret2026')) {
+        return res.status(401).json({ error: 'No autorizado' })
       }
 
-      // Emitir al canal específico de la conversación del usuario
-      io.emit(`mensaje_${telLimpio}`, nuevoMensaje)
-      
-      // Emitir evento general para actualizar la lista de chats en el panel
-      io.emit('actualizar_chat', nuevoMensaje)
-    }
+      const {
+        telefono = '',
+        mensaje = '',
+        emisor = 'USUARIO',
+        tipo_mensaje = 'TEXTO',
+        url_media = '',
+        botones = []
+      } = req.body
 
-    return res.status(201).json({ success: true })
-  } catch (error: any) {
-    console.error('❌ Error en guardarMensaje:', error.message || error)
-    return res.status(500).json({ error: 'Error interno al guardar mensaje' })
+      if (!telefono) {
+        return res.status(400).json({ error: 'El teléfono es obligatorio' })
+      }
+
+      const telLimpio = String(telefono).replace(/\D/g, '')
+      const botonesJson = JSON.stringify(Array.isArray(botones) ? botones : [])
+
+      // Normalización del texto visible para el chat de usuario
+      const textoFinal = mensaje && mensaje.trim() !== ''
+        ? mensaje
+        : (url_media ? 'Archivo adjunto' : ' ')
+
+      const [result]: any = await withTimeout(
+        db.execute(
+          `INSERT INTO mensajes (telefono_usuario, mensaje, emisor, botones, url_media, tipo_mensaje, fecha)
+         VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+          [telLimpio, textoFinal, emisor, botonesJson, url_media, tipo_mensaje]
+        ),
+        5000
+      )
+
+      // 🟢 EMITIR EVENTO EN TIEMPO REAL VÍA SOCKET.IO
+      const io = req.app.get('io')
+      if (io) {
+        const nuevoMensaje = {
+          id: result.insertId,
+          telefono_usuario: telLimpio,
+          mensaje: textoFinal,
+          emisor,
+          botones: Array.isArray(botones) ? botones : [],
+          url_media,
+          tipo_mensaje,
+          fecha: new Date().toISOString()
+        }
+
+        // Emitir al canal específico de la conversación del usuario
+        io.emit(`mensaje_${telLimpio}`, nuevoMensaje)
+
+        // Emitir evento general para actualizar la lista de chats en el panel
+        io.emit('actualizar_chat', nuevoMensaje)
+      }
+
+      return res.status(201).json({ success: true })
+    } catch (error: any) {
+      console.error('❌ Error en guardarMensaje:', error.message || error)
+      return res.status(500).json({ error: 'Error interno al guardar mensaje' })
+    }
   }
-}
-  // =========================================================
-  // CONSULTAR USUARIO
-  // =========================================================
+
+  /**
+ * Consulta la información de un usuario registrado.
+ *
+ * Busca un usuario mediante su número telefónico y retorna la información almacenada en el sistema.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con el teléfono del usuario.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Información del usuario consultado.
+ * @throws {Error} Cuando ocurre un error durante la consulta.
+ */
   static async checkUser(req: Request, res: Response) {
     try {
       const { telefono } = req.params
@@ -199,9 +256,18 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // REGISTRO DE USUARIO (POST)
-  // =========================================================
+  /**
+ * Registra un nuevo usuario en el sistema.
+ *
+ * Almacena los datos básicos del usuario para permitir su interacción con el chatbot.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con la información del usuario.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Resultado del registro.
+ * @throws {Error} Cuando ocurre un error durante el proceso.
+ */
   static async registerUser(req: Request, res: Response) {
     try {
       const { telefono, nombre, cedula, email } = req.body
@@ -228,9 +294,18 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // REACTIVAR BOT
-  // =========================================================
+  /**
+ * Reactiva el funcionamiento automático del chatbot para un usuario.
+ *
+ * Actualiza el estado del usuario y notifica al servicio correspondiente para habilitar nuevamente la atención automática.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con el teléfono del usuario.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Confirmación de la reactivación.
+ * @throws {Error} Cuando ocurre un error durante la operación.
+ */
   static async reactivarBot(req: Request, res: Response) {
     try {
       const { telefono = '' } = req.body
@@ -258,9 +333,18 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // HISTORIAL CHAT
-  // =========================================================
+  /**
+ * Obtiene el historial completo de conversación de un usuario.
+ *
+ * Consulta todos los mensajes asociados a un número telefónico, incluyendo contenido multimedia y metadatos relacionados.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con el teléfono del usuario.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Historial de mensajes del usuario.
+ * @throws {Error} Cuando ocurre un error durante la consulta.
+ */
   static async getChatHistory(req: Request, res: Response) {
     try {
       const { telefono = '' } = req.params
@@ -313,16 +397,25 @@ export class BotController {
       return res.status(200).json(historialFormateado)
     } catch (error: any) {
       console.error('❌ Error en getChatHistory:', error.message || error)
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Error al obtener historial',
-        detalle: error.message 
+        detalle: error.message
       })
     }
   }
 
-  // =========================================================
-  // SOLICITAR ASESOR
-  // =========================================================
+  /**
+ * Solicita la intervención de un asesor humano.
+ *
+ * Desactiva temporalmente el chatbot para el usuario y registra la solicitud de atención personalizada.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP con el teléfono del usuario.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Confirmación de la solicitud.
+ * @throws {Error} Cuando ocurre un error durante el proceso.
+ */
   static async solicitarAsesor(req: Request, res: Response) {
     try {
       const { telefono = '' } = req.body
@@ -356,9 +449,18 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // LISTAR USUARIOS
-  // =========================================================
+  /**
+ * Obtiene el listado completo de usuarios registrados.
+ *
+ * Consulta la información de todos los usuarios almacenados en la base de datos.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP recibida por el servidor.
+ * @param {Response} res Respuesta HTTP enviada al cliente.
+ * @returns {Promise<Response>} Listado de usuarios registrados.
+ * @throws {Error} Cuando ocurre un error durante la consulta.
+ */
   static async getAllUsers(req: Request, res: Response) {
     try {
       const [rows] = await withTimeout<[UsuarioRow[], any]>(
@@ -392,9 +494,17 @@ export class BotController {
     }
   }
 
-  // =========================================================
-  // MÉTODOS DE COMPATIBILIDAD
-  // =========================================================
+  /**
+ * Método de compatibilidad para el envío de mensajes.
+ *
+ * Redirige la solicitud al manejador principal de acciones del bot.
+ *
+ * @async
+ * @static
+ * @param {Request} req Solicitud HTTP recibida.
+ * @param {Response} res Respuesta HTTP enviada.
+ * @returns {Promise<Response>} Resultado de la acción ejecutada.
+ */
   static async sendMessage(req: Request, res: Response) {
     return BotController.handleBotAction(req, res)
   }

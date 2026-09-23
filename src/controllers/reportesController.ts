@@ -1,11 +1,35 @@
 import { type Request, type Response } from "express";
 import { db } from '../config/db.js';
 
+/**
+ * @file reportesController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de reportes del sistema, permitiendo crear, consultar, actualizar y eliminar informes almacenados
+ * en la base de datos.
+ *
+ * Funcionalidades:
+ * - Consulta de reportes.
+ * - Creación de reportes.
+ * - Actualización de reportes.
+ * - Eliminación de reportes.
+ *
+ * @class reportesController
+ */
 export class reportesController {
 
-    // =========================================================
-    // OBTENER TODOS LOS INFORMES
-    // =========================================================
+    /**
+     * Obtiene el listado completo de reportes registrados.
+     *
+     * Consulta la información almacenada en la tabla de reportes y retorna los registros ordenados de forma descendente por identificador.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de reportes registrados.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta de los reportes.
+     */
     static async BringReport(req: Request, res: Response) {
         try {
             const query = 'SELECT id, nombre, informe, estado, fecha_generado FROM reporte ORDER BY id DESC';
@@ -28,9 +52,19 @@ export class reportesController {
         }
     }
 
-    // =========================================================
-    // CREAR UN NUEVO INFORME
-    // =========================================================
+    /**
+     * Crea un nuevo reporte en el sistema.
+     *
+     * Valida la información recibida, registra el reporte en la base de datos y asigna un estado inicial cuando sea necesario.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP con la información del reporte.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado del proceso de creación.
+     *
+     * @throws {Error} Cuando ocurre un error durante el registro del reporte.
+     */
     static async createReport(req: Request, res: Response) {
         try {
             const { nombre, informe, estado } = req.body;
@@ -59,9 +93,19 @@ export class reportesController {
         }
     }
 
-    // =========================================================
-    // ACTUALIZAR UN INFORME
-    // =========================================================
+    /**
+     * Actualiza la información de un reporte existente.
+     *
+     * Modifica los datos asociados al nombre, contenido y estado del reporte identificado mediante su id.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de actualización.
+     */
     static async updateReport(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -91,9 +135,19 @@ export class reportesController {
         }
     }
 
-    // =========================================================
-    // ELIMINAR UN INFORME
-    // =========================================================
+    /**
+     * Elimina un reporte del sistema.
+     *
+     * Remueve permanentemente el registro asociado al identificador recibido en la solicitud.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador del reporte.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+     */
     static async deleteReport(req: Request, res: Response) {
         try {
             const { id } = req.params;

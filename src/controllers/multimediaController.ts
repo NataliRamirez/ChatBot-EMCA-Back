@@ -2,9 +2,38 @@ import { type Response, type Request } from 'express'
 import { db } from '../config/db.js'
 import { crearMediaDTO, type MediaDTOInput } from '../dtos/dtos.js'
 
+/**
+ * @file multimediaController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de contenido multimedia,
+ * permitiendo registrar, consultar, actualizar y eliminar archivos
+ * asociados a mensajes y reportes dentro del sistema.
+ *
+ * Funcionalidades:
+ * - Registro de archivos multimedia.
+ * - Asociación de archivos a mensajes y reportes.
+ * - Consulta de contenido multimedia.
+ * - Actualización de estados y respuestas.
+ * - Eliminación de registros multimedia.
+ *
+ * @class multimediaController
+ */
 export class multimediaController {
   
-  // 1. Guardar archivo formateado
+   /**
+   * Registra un archivo multimedia en el sistema.
+   *
+   * Procesa archivos cargados mediante Multer o URLs enviadas desde el cliente, determina automáticamente el tipo de contenido multimedia, registra la
+   * información en las tablas de mensajes y reportes, y genera la estructura de datos correspondiente para su almacenamiento.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el archivo o los datos multimedia.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la operación y datos del contenido registrado.
+   *
+   * @throws {Error} Cuando ocurre un error durante el procesamiento o almacenamiento del archivo.
+   */
   static async createMultimedia(req: Request, res: Response) {
     try {
       const baseUrl = `${req.protocol}://${req.get('host')}`
@@ -91,7 +120,20 @@ export class multimediaController {
     }
   }
 
-  // 2. Obtener reportes formateados
+  /**
+   * Obtiene el listado de archivos multimedia registrados.
+   *
+   * Consulta la información almacenada en la tabla de reportes, formatea los datos mediante DTOs y retorna el contenido multimedia
+   * disponible en el sistema.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP recibida por el servidor.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Listado de contenido multimedia registrado.
+   *
+   * @throws {Error} Cuando ocurre un error durante la consulta de información.
+   */
   static async BringMultimedia(req: Request, res: Response) {
     try {
       const baseUrl = `${req.protocol}://${req.get('host')}`
@@ -120,7 +162,19 @@ export class multimediaController {
     }
   }
 
-  // 3. Actualizar estado / respuesta
+  /**
+   * Actualiza la información de un registro multimedia.
+   *
+   * Permite modificar el estado y la respuesta asociada a un contenido multimedia previamente registrado.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la actualización.
+   *
+   * @throws {Error} Cuando ocurre un error durante la actualización del registro.
+   */
   static async updateMultimedia(req: Request, res: Response) {
     try {
       const { id } = req.params
@@ -136,7 +190,19 @@ export class multimediaController {
     }
   }
 
-  // 4. Eliminar registro
+  /**
+   * Elimina un registro multimedia del sistema.
+   *
+   * Remueve permanentemente el contenido multimedia asociado al identificador recibido en la solicitud.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador del registro.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la eliminación.
+   *
+   * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+   */
   static async deleteMultimedia(req: Request, res: Response) {
     try {
       const { id } = req.params

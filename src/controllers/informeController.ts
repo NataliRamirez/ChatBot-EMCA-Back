@@ -4,7 +4,13 @@ import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { type RowDataPacket, type ResultSetHeader } from 'mysql2';
 
-// Interfaz para dar tipo estricto a las filas de la base de datos
+/**
+ * Interfaz que define la estructura de los registros de informes
+ * obtenidos desde la base de datos.
+ *
+ * @interface InformeRow
+ * @extends {RowDataPacket}
+ */
 interface InformeRow extends RowDataPacket {
   id: number;
   empleado_id: number;
@@ -17,11 +23,36 @@ interface InformeRow extends RowDataPacket {
   estado: string;
 }
 
+/**
+ * @file informeController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de informes,
+ * permitiendo crear, consultar, actualizar, eliminar y exportar
+ * informes en formatos PDF y Excel.
+ * 
+ * Funcionalidades:
+ * - Creación de informes.
+ * - Consulta de informes.
+ * - Actualización de informes.
+ * - Eliminación de informes.
+ * - Exportación de informes en PDF.
+ * - Exportación de informes en Excel.
+ */
 export class informeController {
 
-  // =========================
-  // CREAR INFORME
-  // =========================
+  /**
+   * Crea un nuevo informe en el sistema.
+   *
+   * Valida los datos recibidos, obtiene la información del empleado autenticado cuando sea necesario y registra el informe en la base de datos.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP con la información del informe.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} Cuando ocurre un error durante el registro del informe.
+   */
   static async createInforme(req: Request, res: Response): Promise<void> {
     try {
       const {
@@ -88,9 +119,19 @@ export class informeController {
     }
   }
 
-  // =========================
-  // LISTAR INFORMES
-  // =========================
+  /**
+   * Obtiene el listado completo de informes registrados.
+   *
+   * Consulta todos los informes almacenados en la base de datos ordenados de forma descendente por identificador.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP recibida por el servidor.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} Cuando ocurre un error durante la consulta de informes.
+   */
   static async BringInforme(req: Request, res: Response): Promise<void> {
     try {
       const [rows] = await db.execute<InformeRow[]>(`
@@ -108,9 +149,19 @@ export class informeController {
     }
   }
 
-  // =========================
-  // ACTUALIZAR INFORME
-  // =========================
+  /**
+   * Actualiza la información de un informe existente.
+   *
+   * Modifica los datos de un informe identificado mediante su id.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} Cuando ocurre un error durante la actualización del informe.
+   */
   static async updateInforme(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -158,9 +209,19 @@ export class informeController {
     }
   }
 
-  // =========================
-  // ELIMINAR INFORME
-  // =========================
+  /**
+   * Elimina un informe del sistema.
+   *
+   * Remueve permanentemente el registro asociado al identificador recibido.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador del informe.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} Cuando ocurre un error durante la eliminación del informe.
+   */
   static async deleteInforme(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -181,9 +242,19 @@ export class informeController {
     }
   }
 
-  // =========================
-  // GENERAR PDF
-  // =========================
+  /**
+   * Genera un archivo PDF con el listado de informes registrados.
+   *
+   * Consulta la información almacenada en la base de datos y construye un documento PDF para su descarga.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP recibida por el servidor.
+   * @param {Response} res Respuesta HTTP utilizada para enviar el archivo PDF.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} Cuando ocurre un error durante la generación del PDF.
+   */
   static async generarPDF(req: Request, res: Response): Promise<void> {
     try {
       const [rows] = await db.execute<InformeRow[]>(
@@ -225,9 +296,20 @@ export class informeController {
     }
   }
 
-  // =========================
-  // GENERAR EXCEL
-  // =========================
+  /**
+   * Genera un archivo Excel con el listado de informes registrados.
+   *
+   * Consulta la información almacenada en la base de datos y crea
+   * una hoja de cálculo para su descarga.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP recibida por el servidor.
+   * @param {Response} res Respuesta HTTP utilizada para enviar el archivo Excel.
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} Cuando ocurre un error durante la generación del archivo Excel.
+   */
   static async generarExcel(req: Request, res: Response): Promise<void> {
     try {
       const [rows] = await db.execute<InformeRow[]>(

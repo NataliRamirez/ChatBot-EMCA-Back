@@ -1,9 +1,34 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+/**
+ * @file ConfiguracionController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de configuraciones
+ * del sistema, permitiendo registrar, consultar, actualizar y eliminar
+ * parámetros de configuración.
+ * 
+ * Funcionalidades:
+ * - Registro de configuraciones.
+ * - Consulta de configuraciones.
+ * - Actualización de parámetros de configuración.
+ * - Eliminación de configuraciones.
+ */
 export class ConfiguracionController {
 
-    // Crear un parámetro o ajuste del sistema
+    /**
+     * Crea una nueva configuración en el sistema.
+     *
+     * Registra un parámetro de configuración con su respectiva clave, valor y descripción para ser utilizado por la aplicación.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene los datos de la configuración.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la operación de registro.
+     *
+     * @throws {Error} Cuando ocurre un error durante el almacenamiento de la configuración.
+     */
     static async CreateConfiguracion(req: Request, res: Response) {
         try {
             const { clave, valor, descripcion } = req.body;
@@ -22,7 +47,19 @@ export class ConfiguracionController {
         }
     }
 
-    // Obtener todas las configuraciones o una clave específica
+    /**
+     * Obtiene las configuraciones registradas en el sistema.
+     *
+     * Consulta todos los parámetros de configuración almacenados en la base de datos.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de configuraciones registradas.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta de información.
+     */
     static async BringConfiguracion(req: Request, res: Response) {
         try {
             const query = 'SELECT id, clave, valor, descripcion, fecha_actualizacion FROM configuraciones';
@@ -38,7 +75,19 @@ export class ConfiguracionController {
         }
     }
 
-    // Actualizar el valor de un ajuste por su ID
+     /**
+     * Actualiza una configuración existente.
+     *
+     * Modifica el valor y la descripción de un parámetro de configuración identificado por su id.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de actualización.
+     */
     static async UpdateConfiguracion(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -58,7 +107,19 @@ export class ConfiguracionController {
         }
     }
 
-    // Eliminar una configuración del sistema
+     /**
+     * Elimina una configuración del sistema.
+     *
+     * Remueve de forma permanente un parámetro de configuración identificado mediante su id.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el identificador de la configuración.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+     */
     static async DeleteConfiguracion(req: Request, res: Response) {
         try {
             const { id } = req.params;
