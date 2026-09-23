@@ -1,0 +1,14 @@
+import Express from 'express';
+import { SolicitudesController } from '../controllers/SolicitudesController.js';
+
+
+const Solicitudesrouter = Express.Router();
+
+Solicitudesrouter.post("/", SolicitudesController.CreateSolicitudes);
+Solicitudesrouter.get("/", SolicitudesController.BringSolicitudes);
+Solicitudesrouter.get("/:id", SolicitudesController.BringSolicitud);
+Solicitudesrouter.put("/:id", SolicitudesController.UpdateSolicitudes);
+Solicitudesrouter.delete("/:id", SolicitudesController.DeleteSolicitudes);
+Solicitudesrouter.post("/:id/asignar", SolicitudesController.CreateAsignarSolicitud);
+
+export default Solicitudesrouter;
