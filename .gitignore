@@ -1,0 +1,14 @@
+.env
+
+
+#variables de entorno 
+package-lock.json
+package.json
+uploads
+
+#Modulos
+node_modules
+
+
+#VARIABLES DE ENTORNO
+.env.example

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "rootDir": "./src",
+    "outDir": "./dist",
+  
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+     "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "../Chatbot/src/flows"],
+  "ts-node": {
+    "esm": true  
+  }
+}
