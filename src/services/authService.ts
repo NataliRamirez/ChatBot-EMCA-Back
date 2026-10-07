@@ -2,6 +2,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { envs } from '../config/Envs.js';
 
+
+
+
 /**
  * @file AuthService.ts
  * @author Juan David Nieto
@@ -30,9 +33,13 @@ export class AuthService {
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de cifrado.
      */
+
     static async hashPassword(password: string): Promise<string> {
         return await bcrypt.hash(password, envs.SALT_ROUNDS);
     }
+
+
+    // 2. Comparar (para el Login)
 
     /**
      * Compara una contraseña en texto plano con una contraseña cifrada.
@@ -47,9 +54,11 @@ export class AuthService {
      *
      * @throws {Error} Cuando ocurre un error durante la comparación.
      */
+
     static async comparePassword(password: string, hash: string): Promise<boolean> {
         return await bcrypt.compare(password, hash);
     }
+
 
     /**
      * Genera un token JWT para la autenticación de usuarios.
@@ -63,6 +72,7 @@ export class AuthService {
      *
      * @throws {Error} Cuando ocurre un error durante la generación del token.
      */
+
     static generateToken(payload: object): string {
         return jwt.sign(payload, envs.JWT_SECRET, { expiresIn: '2h' });
     }

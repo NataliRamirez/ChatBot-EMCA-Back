@@ -3,6 +3,7 @@ import { db } from "../config/db.js";
 import { AuthService } from "../services/authService.js";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 
+
 /**
  * @file employeController.ts
  * @author Juan David Nieto
@@ -32,6 +33,7 @@ export class employeController {
    *
    * @throws {Error} Cuando ocurre un error durante la consulta de empleados.
    */
+
   static async getAllEmployes(req: Request, res: Response) {
     try {
       // Destructuramos la primera posición [rows] para obtener directamente los resultados de MySQL
@@ -43,6 +45,7 @@ export class employeController {
       return res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
     }
   }
+
 
   /**
    * Registra un nuevo empleado en el sistema.
@@ -58,6 +61,7 @@ export class employeController {
    *
    * @throws {Error} Cuando ocurre un error durante el registro del empleado.
    */
+
   static async createEmploye(req: Request, res: Response) {
     try {
       const { nombre, apellido, telefono, cedula, contraseña, email } = req.body;
@@ -98,6 +102,7 @@ export class employeController {
     }
   }
 
+
    /**
    * Autentica un empleado dentro del sistema.
    *
@@ -112,6 +117,7 @@ export class employeController {
    *
    * @throws {Error} Cuando ocurre un error durante la autenticación.
    */
+
   static async login(req: Request, res: Response) {
     try {
       const email = String(req.body.email ?? '').trim();
@@ -161,6 +167,7 @@ export class employeController {
     }
   }
 
+
    /**
    * Actualiza la información de un empleado existente.
    *
@@ -174,6 +181,7 @@ export class employeController {
    *
    * @throws {Error} Cuando ocurre un error durante la actualización del empleado.
    */
+
   static async updateEmploye(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -197,6 +205,7 @@ export class employeController {
     }
   }
 
+
    /**
    * Elimina un empleado del sistema.
    *
@@ -210,6 +219,7 @@ export class employeController {
    *
    * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
    */
+
   static async deleteEmploye(req: Request, res: Response) {
     try {
       const { id } = req.params;

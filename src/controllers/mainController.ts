@@ -1,6 +1,7 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+
 /**
  * @file mainController.ts
  * @author Juan David Nieto
@@ -29,6 +30,7 @@ export class mainController{
      *
      * @throws {Error} Cuando ocurre un error durante el registro del contenido.
      */
+
     static async createMain(req:Request, res:Response){
         try{
             const { informe, titulo, estado } = req.body;
@@ -44,6 +46,7 @@ export class mainController{
         }
     }
 
+
     /**
      * Obtiene la información del contenido principal.
      *
@@ -57,6 +60,7 @@ export class mainController{
      *
      * @throws {Error} Cuando ocurre un error durante la consulta.
      */
+
     static async BringMain(req:Request, res:Response){
         try{ 
             const { informe, titulo, estado } = req.body;
@@ -72,6 +76,7 @@ export class mainController{
         }
     }
 
+
      /**
      * Actualiza un registro de contenido principal.
      *
@@ -85,6 +90,7 @@ export class mainController{
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de actualización.
      */
+
     static async updateMain(req:Request, res:Response){
         try{
             const { informe, titulo, estado } = req.body;
@@ -100,6 +106,7 @@ export class mainController{
         }
     }
 
+
     /**
      * Elimina un registro de contenido principal.
      *
@@ -113,6 +120,7 @@ export class mainController{
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
      */
+
     static async deleteMain(req:Request, res:Response){
         try{
             const { informe, titulo, estado } = req.body;

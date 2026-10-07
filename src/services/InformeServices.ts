@@ -6,83 +6,159 @@
  * en formato PDF y Excel.
  */
 
+const API_URL = 'http://127.0.0.1:4000/v1/informes';
+const API_KEY = 'EmcaSecret2026';
+
 /**
- * Servicio para la gestión de informes.
+ * Cliente HTTP base centralizado.
  *
- * Funcionalidades:
- * - Consultar informes registrados.
- * - Crear nuevos informes.
- * - Actualizar informes existentes.
- * - Eliminar informes.
- * - Generar reportes en PDF.
- * - Generar reportes en Excel.
- *
- * @module informesService
+ * Agrega automáticamente la API Key y el Content-Type
+ * cuando se envía información JSON.
  */
+const apiFetch = async (
+  endpoint: string = '',
+  options: RequestInit = {}
+): Promise<Response> => {
 
+  const url = `${API_URL}${endpoint}`;
 
-const API = 'http://127.0.0.1:4000/v1/informes';
+  const headers: Record<string, string> = {
+    'x-api-key': API_KEY,
+    ...(options.headers as Record<string, string> || {})
+  };
 
-const headers = {
-  'Content-Type': 'application/json',
-  'x-api-key': 'EmcaSecret2026'
-};
+  if (
+    options.body &&
+    !(options.body instanceof FormData)
+  ) {
+    headers['Content-Type'] = 'application/json';
+  }
 
-export const obtenerInformes = async () => {
-  const res = await fetch(API, {
+  const res = await fetch(url, {
+    ...options,
     headers
   });
 
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+
+    throw new Error(
+      errorData.mensaje ||
+      errorData.error ||
+      `Error HTTP: ${res.status}`
+    );
+  }
+
+  return res;
+};
+
+// =========================================================
+// SERVICIOS CRUD DE INFORMES
+// =========================================================
+
+/**
+ * Obtener todos los informes.
+ */
+export const obtenerInformes = async (): Promise<any> => {
+
+  const res = await apiFetch();
+
   return await res.json();
 };
 
-export const crearInforme = async (datos) => {
-  const res = await fetch(API, {
+/**
+ * Crear un nuevo informe.
+ */
+export const crearInforme = async (
+  datos: Record<string, any>
+): Promise<any> => {
+
+  const res = await apiFetch('', {
     method: 'POST',
-    headers,
     body: JSON.stringify(datos)
   });
 
   return await res.json();
 };
 
-export const actualizarInforme = async (id, datos) => {
-  const res = await fetch(`${API}/${id}`, {
+/**
+ * Actualizar un informe existente.
+ */
+export const actualizarInforme = async (
+  id: number | string,
+  datos: Record<string, any>
+): Promise<any> => {
+
+  const res = await apiFetch(`/${id}`, {
     method: 'PUT',
-    headers,
     body: JSON.stringify(datos)
   });
 
   return await res.json();
 };
 
-export const eliminarInforme = async (id) => {
-  const res = await fetch(`${API}/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'x-api-key': 'EmcaSecret2026'
-    }
+/**
+ * Eliminar un informe existente.
+ */
+export const eliminarInforme = async (
+  id: number | string
+): Promise<any> => {
+
+  const res = await apiFetch(`/${id}`, {
+    method: 'DELETE'
   });
 
   return await res.json();
 };
 
-export const generarPDF = async () => {
-  const res = await fetch(`${API}/pdf`, {
-    headers: {
-      'x-api-key': 'EmcaSecret2026'
-    }
-  });
+// =========================================================
+// EXPORTACIÓN DE ARCHIVOS
+// =========================================================
+
+/**
+ * Generar reporte PDF de informes.
+ */
+export const generarPDF = async (): Promise<Blob> => {
+
+  const res = await apiFetch('/pdf');
 
   return await res.blob();
 };
 
-export const generarExcel = async () => {
-  const res = await fetch(`${API}/excel`, {
-    headers: {
-      'x-api-key': 'EmcaSecret2026'
-    }
-  });
+/**
+ * Generar reporte Excel de informes.
+ */
+export const generarExcel = async (): Promise<Blob> => {
+
+  const res = await apiFetch('/excel');
 
   return await res.blob();
+};
+
+// =========================================================
+// DESCARGA DE ARCHIVOS
+// =========================================================
+
+/**
+ * Descarga un Blob generado por la API.
+ */
+export const descargarBlob = (
+  blob: Blob,
+  nombreArchivo: string
+): void => {
+
+  const url = window.URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = nombreArchivo;
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  a.remove();
+
+  window.URL.revokeObjectURL(url);
 };

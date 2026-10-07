@@ -1,8 +1,10 @@
 import Express from 'express';
 import { SolicitudesController } from '../controllers/SolicitudesController.js';
 
-
 const Solicitudesrouter = Express.Router();
+
+Solicitudesrouter.get("/pdf", SolicitudesController.generarPDF);
+Solicitudesrouter.get("/excel", SolicitudesController.descargarExcel);
 
 Solicitudesrouter.post("/", SolicitudesController.CreateSolicitudes);
 Solicitudesrouter.get("/", SolicitudesController.BringSolicitudes);

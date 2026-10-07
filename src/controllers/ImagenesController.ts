@@ -1,6 +1,7 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+
 /**
  * @file ImagenesController.ts
  * @author Juan David Nieto
@@ -41,6 +42,7 @@ export class ImagenesController{
             res.status(500).json({ menssaje: 'Error de conexion con la base de datos'});
         }
     }
+
 
 
     /**

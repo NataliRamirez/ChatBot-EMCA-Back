@@ -1,269 +1,437 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { db } from '../config/db.js';
-import { envs } from '../config/Envs.js';
 
-// 1. AÑADIDO: Incluir 'jefe' y 'asesor' en los roles permitidos
-const ROLES_PERMITIDOS = ['admin', 'jefe', 'asesor', 'usuario', 'bot'];
-
-/**
- * @file LoginController.ts
- * @author Juan David Nieto
- * @description Controlador encargado de la gestión de autenticación
- * y administración de empleados, incluyendo registro, inicio de sesión,
- * actualización y eliminación de usuarios.
- * 
- * Funcionalidades:
- * - Registro de empleados.
- * - Inicio de sesión.
- * - Generación de tokens JWT.
- * - Actualización de empleados.
- * - Eliminación de empleados.
- */
 export class LoginController {
 
-   /**
-   * Registra un nuevo empleado en el sistema.
-   *
-   * Valida la información recibida, verifica que el correo electrónico no exista previamente, encripta la contraseña
-   * y almacena el usuario en la base de datos.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP con los datos del empleado.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Resultado del proceso de registro.
-   *
-   * @throws {Error} Cuando ocurre un error durante el registro del empleado.
-   */
-  static async createLogin(req: Request, res: Response) {
-    const { nombre, apellido, telefono, email, estado, password, rol } = req.body;
+    // =========================================================
+    // REGISTRAR USUARIO
+    // =========================================================
 
-    if (!nombre || !apellido || !telefono || !email || !password) {
-      return res.status(400).json({
-        mensaje: 'Faltan campos obligatorios para el registro'
-      });
+    static async createLogin(req: Request, res: Response) {
+
+        try {
+
+            const {
+                nombre,
+                apellido,
+                telefono,
+                email,
+                estado,
+                password,
+                rol
+            } = req.body;
+
+            console.log('📝 Datos recibidos para registro:', {
+                nombre,
+                apellido,
+                telefono,
+                email,
+                estado,
+                rol
+            });
+
+            // =====================================================
+            // VALIDACIONES
+            // =====================================================
+
+            if (
+                !nombre ||
+                !apellido ||
+                !telefono ||
+                !email ||
+                !password
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'Nombre, apellido, teléfono, email y contraseña son obligatorios'
+                });
+            }
+
+            // =====================================================
+            // VALIDAR EMAIL
+            // =====================================================
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'El correo electrónico no es válido'
+                });
+            }
+
+            // =====================================================
+            // VALIDAR TELÉFONO
+            // =====================================================
+
+            const phoneRegex = /^\d{10}$/;
+
+            if (!phoneRegex.test(telefono)) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'El teléfono debe contener exactamente 10 dígitos'
+                });
+            }
+
+            // =====================================================
+            // VERIFICAR SI EL EMAIL YA EXISTE
+            // =====================================================
+
+            const [existingUsers]: any = await db.execute(
+                `
+                SELECT id
+                FROM usuarios
+                WHERE email = ?
+                LIMIT 1
+                `,
+                [email]
+            );
+
+            if (existingUsers.length > 0) {
+                return res.status(409).json({
+                    success: false,
+                    mensaje: 'El correo electrónico ya está registrado'
+                });
+            }
+
+            // =====================================================
+            // ENCRIPTAR CONTRASEÑA
+            // =====================================================
+
+            const passwordHash = await bcrypt.hash(password, 10);
+
+            // =====================================================
+            // REGISTRAR USUARIO
+            // =====================================================
+
+            const query = `
+                INSERT INTO usuarios
+                (
+                    nombre,
+                    apellido,
+                    telefono,
+                    email,
+                    estado,
+                    Password_hash,
+                    rol
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            const [result]: any = await db.execute(query, [
+                nombre,
+                apellido,
+                telefono,
+                email,
+                estado || 'activo',
+                passwordHash,
+                rol || 'USUARIO'
+            ]);
+
+            // =====================================================
+            // RESPUESTA
+            // =====================================================
+
+            return res.status(201).json({
+                success: true,
+                mensaje: 'Usuario registrado correctamente',
+                id: result.insertId
+            });
+
+        } catch (error) {
+
+            console.error('❌ Error al registrar usuario:', error);
+
+            return res.status(500).json({
+                success: false,
+                mensaje: 'Error interno al registrar el usuario'
+            });
+        }
     }
 
-    try {
-      const emailLimpio = email.toLowerCase().trim();
-      const rolLimpio = rol ? rol.toString().toLowerCase().trim() : 'usuario';
 
-      if (!ROLES_PERMITIDOS.includes(rolLimpio)) {
-        return res.status(400).json({
-          mensaje: `Rol no válido. Permitidos: ${ROLES_PERMITIDOS.join(', ')}`
-        });
-      }
+    // =========================================================
+    // LOGIN
+    // =========================================================
 
-      const [rows]: any = await db.query(
-        'SELECT id FROM empleados WHERE LOWER(email) = ?',
-        [emailLimpio]
-      );
+    static async BringLogin(req: Request, res: Response) {
 
-      if (rows.length > 0) {
-        return res.status(400).json({
-          mensaje: 'El correo electrónico ya se encuentra registrado'
-        });
-      }
+        try {
 
-      const hashedPassword = await bcrypt.hash(password, envs.SALT_ROUNDS || 10);
+            const {
+                email,
+                password
+            } = req.body;
 
-      await db.query(
-        `INSERT INTO empleados
-        (nombre, apellido, telefono, email, Password_hash, estado, rol)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          nombre.trim(),
-          apellido.trim(),
-          telefono.trim(),
-          emailLimpio,
-          hashedPassword,
-          estado || 'Activo',
-          rolLimpio
-        ]
-      );
+            if (!email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'Email y contraseña son obligatorios'
+                });
+            }
 
-      return res.status(201).json({
-        res: true,
-        mensaje: 'Usuario registrado correctamente'
-      });
+            const [rows]: any = await db.execute(
+                `
+                SELECT
+                    id,
+                    nombre,
+                    apellido,
+                    telefono,
+                    email,
+                    estado,
+                    rol,
+                    Password_hash
+                FROM usuarios
+                WHERE email = ?
+                LIMIT 1
+                `,
+                [email]
+            );
 
-    } catch (error: any) {
-      console.error('❌ Error en createLogin:', error);
-      return res.status(500).json({
-        mensaje: 'Error interno del servidor',
-        error: error.message
-      });
+            if (rows.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    mensaje: 'Correo o contraseña incorrectos'
+                });
+            }
+
+            const usuario = rows[0];
+
+            // =====================================================
+            // COMPARAR CONTRASEÑA
+            // =====================================================
+
+            const passwordCorrecta = await bcrypt.compare(
+                password,
+                usuario.Password_hash
+            );
+
+            if (!passwordCorrecta) {
+                return res.status(401).json({
+                    success: false,
+                    mensaje: 'Correo o contraseña incorrectos'
+                });
+            }
+
+            // =====================================================
+            // VALIDAR ESTADO
+            // =====================================================
+
+            if (
+                usuario.estado &&
+                usuario.estado.toLowerCase() !== 'activo'
+            ) {
+                return res.status(403).json({
+                    success: false,
+                    mensaje: 'El usuario se encuentra inactivo'
+                });
+            }
+
+            // =====================================================
+            // RESPUESTA
+            // =====================================================
+
+            return res.status(200).json({
+                success: true,
+                mensaje: 'Inicio de sesión exitoso',
+                usuario: {
+                    id: usuario.id,
+                    nombre: usuario.nombre,
+                    apellido: usuario.apellido,
+                    telefono: usuario.telefono,
+                    email: usuario.email,
+                    estado: usuario.estado,
+                    rol: usuario.rol
+                }
+            });
+
+        } catch (error) {
+
+            console.error('❌ Error en login:', error);
+
+            return res.status(500).json({
+                success: false,
+                mensaje: 'Error interno al iniciar sesión'
+            });
+        }
     }
-  }
 
-  /**
-   * Autentica un empleado en el sistema.
-   *
-   * Verifica la existencia del usuario, valida el estado de la cuenta, compara la contraseña utilizando bcrypt y genera un token JWT
-   * para la sesión autenticada.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP con las credenciales del usuario.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Token JWT e información del usuario autenticado.
-   *
-   * @throws {Error} Cuando ocurre un error durante el proceso de autenticación.
-   */
-  static async BringLogin(req: Request, res: Response) {
-    try {
-      const { email, password } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ 
-          mensaje: 'Email y contraseña son requeridos' 
-        });
-      }
+    // =========================================================
+    // ACTUALIZAR USUARIO
+    // =========================================================
 
-      const emailLimpio = email.toLowerCase().trim();
+    static async updateLogin(req: Request, res: Response) {
 
-      // Mapeamos Password_hash (MySQL exacto) y password_hash por compatibilidad
-      const [rows]: any = await db.query(
-        'SELECT id, nombre, apellido, email, Password_hash, password_hash, estado, rol FROM empleados WHERE LOWER(email) = ?',
-        [emailLimpio]
-      );
+        try {
 
-      const usuario = rows[0];
+            const { id } = req.params;
 
-      if (!usuario) {
-        return res.status(404).json({ mensaje: 'Usuario no encontrado' });
-      }
+            const {
+                nombre,
+                apellido,
+                telefono,
+                email,
+                estado,
+                rol,
+                password
+            } = req.body;
 
-      if (usuario.estado && usuario.estado !== 'Activo') {
-        return res.status(403).json({ mensaje: 'El usuario se encuentra inactivo' });
-      }
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'No se recibió el ID del usuario'
+                });
+            }
 
-      const hashEnDB = usuario.Password_hash || usuario.password_hash;
+            if (
+                !nombre ||
+                !apellido ||
+                !telefono ||
+                !email
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'Nombre, apellido, teléfono y email son obligatorios'
+                });
+            }
 
-      if (!hashEnDB) {
-        console.error('🔥 El usuario encontrado no tiene Password_hash en DB');
-        return res.status(500).json({ mensaje: 'Error en la estructura del usuario' });
-      }
+            // =====================================================
+            // ACTUALIZAR CON CONTRASEÑA
+            // =====================================================
 
-      const esValida = await bcrypt.compare(password, hashEnDB);
+            if (password) {
 
-      if (!esValida) {
-        return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
-      }
+                const passwordHash = await bcrypt.hash(password, 10);
 
-      const token = jwt.sign(
-        { 
-          id: usuario.id, 
-          email: usuario.email, 
-          rol: usuario.rol 
-        },
-        envs.JWT_SECRET || 'secret_fallback',
-        { expiresIn: '8h' }
-      );
+                const [result]: any = await db.execute(
+                    `
+                    UPDATE usuarios
+                    SET
+                        nombre = ?,
+                        apellido = ?,
+                        telefono = ?,
+                        email = ?,
+                        estado = ?,
+                        rol = ?,
+                        Password_hash = ?
+                    WHERE id = ?
+                    `,
+                    [
+                        nombre,
+                        apellido,
+                        telefono,
+                        email,
+                        estado || 'activo',
+                        rol || 'USUARIO',
+                        passwordHash,
+                        id
+                    ]
+                );
 
-      // Limpiar campos de contraseña antes de responder
-      const { Password_hash, password_hash, ...datosUsuario } = usuario;
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        mensaje: 'Usuario no encontrado'
+                    });
+                }
 
-      // Devolvemos el rol en mayúsculas para garantizar concordancia con React
-      if (datosUsuario.rol) {
-        datosUsuario.rol = datosUsuario.rol.toString().toUpperCase().trim();
-      }
+            } else {
 
-      return res.status(200).json({
-        mensaje: 'Login exitoso',
-        token,
-        empleado: datosUsuario
-      });
+                const [result]: any = await db.execute(
+                    `
+                    UPDATE usuarios
+                    SET
+                        nombre = ?,
+                        apellido = ?,
+                        telefono = ?,
+                        email = ?,
+                        estado = ?,
+                        rol = ?
+                    WHERE id = ?
+                    `,
+                    [
+                        nombre,
+                        apellido,
+                        telefono,
+                        email,
+                        estado || 'activo',
+                        rol || 'USUARIO',
+                        id
+                    ]
+                );
 
-    } catch (error: any) {
-      console.error('❌ Error en BringLogin:', error);
-      return res.status(500).json({ mensaje: error.message });
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        mensaje: 'Usuario no encontrado'
+                    });
+                }
+            }
+
+            return res.status(200).json({
+                success: true,
+                mensaje: 'Usuario actualizado correctamente'
+            });
+
+        } catch (error) {
+
+            console.error('❌ Error al actualizar usuario:', error);
+
+            return res.status(500).json({
+                success: false,
+                mensaje: 'Error interno al actualizar el usuario'
+            });
+        }
     }
-  }
 
-  /**
-   * Actualiza la información de un empleado.
-   *
-   * Permite modificar el nombre, estado y rol de un empleado previamente registrado en el sistema.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP con el identificador y los nuevos datos.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Resultado de la actualización.
-   *
-   * @throws {Error} Cuando ocurre un error durante la actualización del empleado.
-   */
-  static async updateLogin(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { nombre, estado, rol } = req.body;
 
-      if (!id) {
-        return res.status(400).json({ mensaje: 'El ID del empleado es requerido' });
-      }
+    // =========================================================
+    // ELIMINAR USUARIO
+    // =========================================================
 
-      const rolLimpio = rol ? rol.toString().toLowerCase().trim() : 'usuario';
+    static async deleteLogin(req: Request, res: Response) {
 
-      if (rol && !ROLES_PERMITIDOS.includes(rolLimpio)) {
-        return res.status(400).json({
-          mensaje: `Rol no válido. Permitidos: ${ROLES_PERMITIDOS.join(', ')}`
-        });
-      }
+        try {
 
-      await db.query(
-        'UPDATE empleados SET nombre = ?, estado = ?, rol = ? WHERE id = ?',
-        [nombre, estado, rolLimpio, id]
-      );
+            const { id } = req.params;
 
-      return res.status(200).json({
-        mensaje: 'Empleado actualizado correctamente'
-      });
+            if (!id) {
+                return res.status(400).json({
+                    success: false,
+                    mensaje: 'No se recibió el ID del usuario'
+                });
+            }
 
-    } catch (error: any) {
-      console.error('❌ Error en updateLogin:', error);
-      return res.status(500).json({
-        mensaje: 'Error al actualizar el empleado',
-        error: error.message
-      });
+            const [result]: any = await db.execute(
+                `
+                DELETE FROM usuarios
+                WHERE id = ?
+                `,
+                [id]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    mensaje: 'Usuario no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                mensaje: 'Usuario eliminado correctamente'
+            });
+
+        } catch (error) {
+
+            console.error('❌ Error al eliminar usuario:', error);
+
+            return res.status(500).json({
+                success: false,
+                mensaje: 'Error interno al eliminar el usuario'
+            });
+        }
     }
-  }
-
-  /**
-   * Elimina un empleado del sistema.
-   *
-   * Remueve permanentemente el registro de un empleado identificado mediante su id.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP que contiene el identificador del empleado.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Resultado de la eliminación.
-   *
-   * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
-   */
-  static async deleteLogin(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-
-      if (!id) {
-        return res.status(400).json({ mensaje: 'El ID del empleado es requerido' });
-      }
-
-      await db.query('DELETE FROM empleados WHERE id = ?', [id]);
-
-      return res.status(200).json({
-        mensaje: 'Empleado eliminado correctamente'
-      });
-
-    } catch (error: any) {
-      console.error('❌ Error en deleteLogin:', error);
-      return res.status(500).json({
-        mensaje: 'Error al eliminar el empleado',
-        error: error.message
-      });
-    }
-  }
 }

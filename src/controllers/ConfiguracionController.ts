@@ -1,6 +1,8 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+
+
 /**
  * @file ConfiguracionController.ts
  * @author Juan David Nieto
@@ -29,6 +31,7 @@ export class ConfiguracionController {
      *
      * @throws {Error} Cuando ocurre un error durante el almacenamiento de la configuración.
      */
+
     static async CreateConfiguracion(req: Request, res: Response) {
         try {
             const { clave, valor, descripcion } = req.body;
@@ -47,6 +50,9 @@ export class ConfiguracionController {
         }
     }
 
+
+    // Obtener todas las configuraciones o una clave específica
+
     /**
      * Obtiene las configuraciones registradas en el sistema.
      *
@@ -60,6 +66,7 @@ export class ConfiguracionController {
      *
      * @throws {Error} Cuando ocurre un error durante la consulta de información.
      */
+
     static async BringConfiguracion(req: Request, res: Response) {
         try {
             const query = 'SELECT id, clave, valor, descripcion, fecha_actualizacion FROM configuraciones';
@@ -75,6 +82,9 @@ export class ConfiguracionController {
         }
     }
 
+
+    // Actualizar el valor de un ajuste por su ID
+
      /**
      * Actualiza una configuración existente.
      *
@@ -88,6 +98,7 @@ export class ConfiguracionController {
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de actualización.
      */
+
     static async UpdateConfiguracion(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -107,6 +118,9 @@ export class ConfiguracionController {
         }
     }
 
+
+    // Eliminar una configuración del sistema
+
      /**
      * Elimina una configuración del sistema.
      *
@@ -120,6 +134,7 @@ export class ConfiguracionController {
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
      */
+
     static async DeleteConfiguracion(req: Request, res: Response) {
         try {
             const { id } = req.params;

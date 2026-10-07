@@ -1,6 +1,10 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
+
+
+    // Crear un nuevo comprobante
+
 /**
  * @file ComprobanteController.ts
  * @author Juan David Nieto
@@ -29,6 +33,7 @@ export class ComprobanteController {
      *
      * @throws {Error} Cuando ocurre un error durante el almacenamiento del comprobante.
      */
+
     static async CreateComprobante(req: Request, res: Response) {
         try {
             const { codigo, tipo, descripcion, monto, id_empleado } = req.body;
@@ -51,6 +56,9 @@ export class ComprobanteController {
         }
     }
 
+
+    // Obtener la lista de comprobantes
+
     /**
      * Obtiene el listado de comprobantes registrados.
      *
@@ -64,6 +72,7 @@ export class ComprobanteController {
      *
      * @throws {Error} Cuando ocurre un error durante la consulta de datos.
      */
+
     static async BringComprobante(req: Request, res: Response) {
         try {
             const query = `
@@ -85,6 +94,9 @@ export class ComprobanteController {
         }
     }
 
+
+    // Actualizar un comprobante existente
+
     /**
      * Actualiza la información de un comprobante existente.
      *
@@ -98,6 +110,7 @@ export class ComprobanteController {
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de actualización.
      */
+
     static async UpdateComprobante(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -121,6 +134,9 @@ export class ComprobanteController {
         }
     }
 
+
+    // Eliminar un comprobante
+
     /**
      * Elimina un comprobante del sistema.
      *
@@ -134,6 +150,7 @@ export class ComprobanteController {
      *
      * @throws {Error} Cuando ocurre un error durante la eliminación del comprobante.
      */
+
     static async DeleteComprobante(req: Request, res: Response) {
         try {
             const { id } = req.params;

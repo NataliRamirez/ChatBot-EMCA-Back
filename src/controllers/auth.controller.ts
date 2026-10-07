@@ -3,6 +3,7 @@ import { db } from '../config/db.js';
 import bcrypt from 'bcrypt'; 
 import jwt from 'jsonwebtoken';
 
+
 /**
  * @file authController.ts
  * @author Juan David Nieto
@@ -33,6 +34,7 @@ export class  authController   {
      *
      * @throws {Error} Cuando ocurre un error durante la autenticación o el acceso a la base de datos.
      */
+
      static async login(req: Request, res: Response) {
         try {
           const { email, password } = req.body;
@@ -89,6 +91,7 @@ export class  authController   {
         }
       }
     
+
        /**
      * Registra un nuevo empleado en el sistema.
      *
@@ -103,6 +106,7 @@ export class  authController   {
      *
      * @throws {Error} Cuando ocurre un error durante el proceso de registro o inserción en la base de datos.
      */
+
       static async register(req: Request, res: Response) {
         try {
           const {

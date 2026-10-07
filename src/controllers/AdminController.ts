@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { db } from '../config/db.js';
 
+
 /**
  * @file AdminController.ts
  * @author Juan David Nieto
@@ -27,6 +28,7 @@ export class AdminController {
      *
      * @throws {Error} Cuando ocurre un error durante la consulta o inserción en la base de datos.
      */
+
     static async createAdmin(req: Request, res: Response) {
         const { nombre, apellido, telefono, email, Password_hash } = req.body;
 
@@ -68,6 +70,7 @@ export class AdminController {
             });
         }
     }
+
 
      /**
      * Autentica un administrador mediante correo electrónico y contraseña.
@@ -143,4 +146,5 @@ export class AdminController {
             });
         }
     }
+
 }

@@ -1,5 +1,8 @@
 import { type Request, type Response } from "express";
 
+
+
+
 /**
  * @file ayudaController.ts
  * @author Juan David Nieto
@@ -23,6 +26,7 @@ export class ayudaController {
      *
      * @throws {Error} Cuando ocurre un error inesperado al procesar la solicitud.
      */
+
     static async obtenerAyuda(req: Request, res: Response) {
         try {
 

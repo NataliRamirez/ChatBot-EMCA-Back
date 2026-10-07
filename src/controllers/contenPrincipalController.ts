@@ -1,5 +1,8 @@
 import { type Request, type Response } from "express";
-import { db } from '../config/db.js';
+import  { db } from '../config/db.js';
+
+
+
 
 /**
  * @file contenPrincipalController.ts
@@ -40,10 +43,13 @@ export class contenPrincipalController {
         } catch (error) {
             console.log(error);
             res.status(500).json({ menssaje: 'Error de conexión con el backend' });
+
         }
     }
 
 
+
+   
     /**
      * Obtiene la información del contenido principal.
      *
@@ -59,18 +65,23 @@ export class contenPrincipalController {
      */
     static async BringContenPrincipal(req: Request, res: Response) {
         try {
+
             const { titulo, parrafo, estado } = req.body;
 
             const query = 'SELECT titulo, parrafo, estado FROM contenido_principal titulo = ?, parrafo = ?, estado = ?'
 
-            await db.execute(query, { titulo, parrafo, estado });
 
-            res.status(202).json({ menssaje: 'Error de conexion al traer el contenido principal' });
-        } catch (error) {
+            await db.execute(query, {titulo, parrafo, estado});
+
+            res.status(202).json({ menssaje: 'Error de conexion al traer el contenido principal'});
+        }catch (error){
             console.log(error);
-            res.status(500).json({ menssaje: 'Listado del cotenido principal cargado con exito' });
+            res.status(500).json({ menssaje: 'Listado del cotenido principal cargado con exito'});
         }
     }
+
+
+   
 
     /**
         * Actualiza la información de un contenido principal existente.
@@ -87,18 +98,22 @@ export class contenPrincipalController {
         */
     static async updateContenPrincipal(req: Request, res: Response) {
         try {
+
             const { titulo, parrafo, estado } = req.body;
 
             const query = 'UPDATE titulo, parrafo, estado, FROM contenido_principal titulo = ?, parrafo = ? estado = ? ';
 
-            await db.execute(query, { titulo, parrafo, estado });
 
-            res.status(201).json({ menssaje: 'Informe actualizado correctamente' })
-        } catch (error) {
+            await db.execute(query, {titulo, parrafo, estado});
+             
+            res.status(201).json({ menssaje: 'Informe actualizado correctamente'})
+        }catch (error){
             console.log(error)
-            res.status(500).json({ menssaje: 'Faltan campos obligatorios' });
+            res.status(500).json({ menssaje: 'Faltan campos obligatorios'});
         }
     }
+
+  
 
     /**
      * Elimina un registro de contenido principal.
@@ -125,6 +140,7 @@ export class contenPrincipalController {
         } catch (error) {
             console.log(error);
             res.status(500).json({ menssaje: 'Error de conexión con la base de datos' });
+
         }
     }
 }

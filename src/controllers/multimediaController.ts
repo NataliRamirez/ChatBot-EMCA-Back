@@ -2,88 +2,126 @@ import { type Response, type Request } from 'express'
 import { db } from '../config/db.js'
 import { crearMediaDTO, type MediaDTOInput } from '../dtos/dtos.js'
 
-/**
- * @file multimediaController.ts
- * @author Juan David Nieto
- * @description Controlador encargado de la gestión de contenido multimedia,
- * permitiendo registrar, consultar, actualizar y eliminar archivos
- * asociados a mensajes y reportes dentro del sistema.
- *
- * Funcionalidades:
- * - Registro de archivos multimedia.
- * - Asociación de archivos a mensajes y reportes.
- * - Consulta de contenido multimedia.
- * - Actualización de estados y respuestas.
- * - Eliminación de registros multimedia.
- *
- * @class multimediaController
- */
 export class multimediaController {
-  
-   /**
-   * Registra un archivo multimedia en el sistema.
-   *
-   * Procesa archivos cargados mediante Multer o URLs enviadas desde el cliente, determina automáticamente el tipo de contenido multimedia, registra la
-   * información en las tablas de mensajes y reportes, y genera la estructura de datos correspondiente para su almacenamiento.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP que contiene el archivo o los datos multimedia.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Resultado de la operación y datos del contenido registrado.
-   *
-   * @throws {Error} Cuando ocurre un error durante el procesamiento o almacenamiento del archivo.
-   */
+
+  // =========================================================
+  // 1. CREAR / GUARDAR MULTIMEDIA
+  // =========================================================
   static async createMultimedia(req: Request, res: Response) {
     try {
       const baseUrl = `${req.protocol}://${req.get('host')}`
-      
-      // Nombre del archivo generado por Multer o enviado en el body
-      const nombreArchivo = req.file ? req.file.filename : req.body.archivo
+
+      // -----------------------------------------------------
+      // ARCHIVO RECIBIDO POR MULTER
+      // -----------------------------------------------------
+      const nombreArchivo = req.file
+        ? req.file.filename
+        : req.body.archivo
 
       if (!nombreArchivo) {
-        return res.status(400).json({ mensaje: 'No se recibió ningún archivo o URL' })
+        return res.status(400).json({
+          success: false,
+          mensaje: 'No se recibió ningún archivo o URL'
+        })
       }
 
-      const telefono = req.body.telefono || ''
-      
-      // Mapeo dinámico del tipo de media según MIME o body
+      // -----------------------------------------------------
+      // DATOS DEL MENSAJE
+      // -----------------------------------------------------
+      const telefono = String(req.body.telefono || '').trim()
+
+      if (!telefono) {
+        return res.status(400).json({
+          success: false,
+          mensaje: 'No se recibió el número de teléfono'
+        })
+      }
+
+      // -----------------------------------------------------
+      // DETERMINAR TIPO DE MULTIMEDIA
+      // -----------------------------------------------------
       let tipoMedia = req.body.tipoMensaje || 'DOCUMENT'
+
       if (req.file?.mimetype) {
-        if (req.file.mimetype.startsWith('image/')) tipoMedia = 'IMAGEN'
-        else if (req.file.mimetype.startsWith('audio/')) tipoMedia = 'AUDIO'
-        else if (req.file.mimetype.startsWith('video/')) tipoMedia = 'VIDEO'
-        else tipoMedia = 'DOCUMENTO'
+        if (req.file.mimetype.startsWith('image/')) {
+          tipoMedia = 'IMAGEN'
+        } else if (req.file.mimetype.startsWith('audio/')) {
+          tipoMedia = 'AUDIO'
+        } else if (req.file.mimetype.startsWith('video/')) {
+          tipoMedia = 'VIDEO'
+        } else {
+          tipoMedia = 'DOCUMENTO'
+        }
       }
 
-      const emisor = req.body.emisor || 'ASESOR'
-      // Formato compatible con el DTO (ej: ASESOR_IMAGEN, USUARIO_IMAGEN)
-      const tipoMensajeFinal = `${emisor}_${tipoMedia}` as MediaDTOInput['tipoMensaje']
+      // -----------------------------------------------------
+      // EMISOR
+      // -----------------------------------------------------
+      let emisor = req.body.emisor || 'ADMIN'
 
-      const urlCompleta = nombreArchivo.startsWith('http') 
-        ? nombreArchivo 
+      // La tabla mensajes solo permite:
+      // BOT | USUARIO | ADMIN
+      if (!['BOT', 'USUARIO', 'ADMIN'].includes(emisor)) {
+        emisor = 'ADMIN'
+      }
+
+      // -----------------------------------------------------
+      // TIPO DE MENSAJE
+      // Ejemplo:
+      // ADMIN_IMAGEN
+      // ADMIN_VIDEO
+      // ADMIN_AUDIO
+      // ADMIN_DOCUMENTO
+      // -----------------------------------------------------
+      const tipoMensajeFinal =
+        `${emisor}_${tipoMedia}` as MediaDTOInput['tipoMensaje']
+
+      // -----------------------------------------------------
+      // URL FINAL DEL ARCHIVO
+      // -----------------------------------------------------
+      const urlCompleta = String(nombreArchivo).startsWith('http')
+        ? String(nombreArchivo)
         : `${baseUrl}/uploads/${nombreArchivo}`
 
-      // A) Inserción en la tabla MENSAJES (chat en vivo)
+      // -----------------------------------------------------
+      // NOMBRE PARA MOSTRAR
+      // -----------------------------------------------------
+      const nombreMostrar =
+        req.body.nombre ||
+        req.file?.originalname ||
+        'Archivo adjunto'
+
+      // =====================================================
+      // A. GUARDAR EN TABLA MENSAJES
+      // =====================================================
       const queryMensaje = `
-        INSERT INTO mensajes 
-        (telefono_usuario, mensaje, emisor, url_media, tipo_mensaje) 
+        INSERT INTO mensajes
+        (
+          telefono_usuario,
+          mensaje,
+          emisor,
+          url_media,
+          tipo_mensaje
+        )
         VALUES (?, ?, ?, ?, ?)
       `
+
       await db.execute(queryMensaje, [
         telefono,
-        req.body.nombre || req.file?.originalname || 'Archivo adjunto',
+        nombreMostrar,
         emisor,
         urlCompleta,
         tipoMensajeFinal
       ])
 
-      // B) Inserción en REPORTES_DOCUMENTOS mediante DTO
+      // =====================================================
+      // B. CREAR DTO
+      // =====================================================
       const mediaInput: MediaDTOInput = {
         telefono,
-        nombreArchivo,
+        nombreArchivo: String(nombreArchivo),
         tipoMensaje: tipoMensajeFinal,
-        leyendaTexto: req.body.nombre || req.file?.originalname || 'Archivo adjunto',
+        leyendaTexto: nombreMostrar,
         estado: req.body.estado || 'PENDIENTE',
         respuesta: req.body.respuesta || '',
         baseUrl
@@ -91,128 +129,295 @@ export class multimediaController {
 
       const mediaDTO = crearMediaDTO(mediaInput)
 
-      const queryReporte = `
-        INSERT INTO reportes_documentos 
-        (telefono_usuario, nombre, archivo, tipo_mensaje, estado, respuesta, fecha_creacion) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `
-      
-      await db.execute(queryReporte, [
-        mediaDTO.telefono_usuario,
-        mediaDTO.nombre,
-        mediaDTO.url_media,
-        mediaDTO.tipo_mensaje,
-        mediaDTO.estado,
-        mediaDTO.respuesta,
-        mediaDTO.fecha_creacion
-      ])
+      // =====================================================
+      // C. GUARDAR EN REPORTES_DOCUMENTOS
+      // =====================================================
+      try {
+        const queryReporte = `
+          INSERT INTO reportes_documentos
+          (
+            telefono_usuario,
+            nombre,
+            archivo,
+            tipo_mensaje,
+            estado,
+            respuesta,
+            fecha_creacion
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `
 
+        await db.execute(queryReporte, [
+          mediaDTO.telefono_usuario,
+          mediaDTO.nombre,
+          mediaDTO.url_media,
+          mediaDTO.tipo_mensaje,
+          mediaDTO.estado,
+          mediaDTO.respuesta,
+          mediaDTO.fecha_creacion
+        ])
+
+      } catch (reporteError: any) {
+        console.error(
+          '⚠️ Error guardando en reportes_documentos:',
+          reporteError
+        )
+
+        // El archivo ya quedó registrado en mensajes.
+        // No se pierde el registro del chat.
+
+        return res.status(201).json({
+          success: true,
+          advertencia: true,
+          mensaje:
+            'El archivo se guardó correctamente en mensajes, pero no pudo registrarse en reportes_documentos',
+
+          errorReporte: reporteError.message,
+
+          archivoUrl: urlCompleta,
+          url: urlCompleta,
+          url_media: urlCompleta,
+
+          tipo_mensaje: tipoMensajeFinal,
+
+          datos: mediaDTO
+        })
+      }
+
+      // =====================================================
+      // RESPUESTA FINAL
+      // =====================================================
       return res.status(201).json({
         success: true,
-        mensaje: 'Contenido multimedia registrado correctamente',
+
+        mensaje:
+          'Contenido multimedia registrado correctamente',
+
+        // Compatible con Panelusuario.jsx
+        archivoUrl: urlCompleta,
+
+        // Compatibilidad adicional
+        url: urlCompleta,
         url_media: urlCompleta,
+
         tipo_mensaje: tipoMensajeFinal,
+
         datos: mediaDTO
       })
+
     } catch (error: any) {
-      console.error('❌ Error en createMultimedia:', error)
-      return res.status(500).json({ mensaje: 'Error al cargar contenido multimedia', error: error.message })
+      console.error(
+        '❌ Error en createMultimedia:',
+        error
+      )
+
+      return res.status(500).json({
+        success: false,
+        mensaje: 'Error al cargar contenido multimedia',
+        error: error.message
+      })
     }
   }
 
-  /**
-   * Obtiene el listado de archivos multimedia registrados.
-   *
-   * Consulta la información almacenada en la tabla de reportes, formatea los datos mediante DTOs y retorna el contenido multimedia
-   * disponible en el sistema.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP recibida por el servidor.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Listado de contenido multimedia registrado.
-   *
-   * @throws {Error} Cuando ocurre un error durante la consulta de información.
-   */
-  static async BringMultimedia(req: Request, res: Response) {
+
+  // =========================================================
+  // 2. OBTENER MULTIMEDIA
+  // =========================================================
+  static async BringMultimedia(
+    req: Request,
+    res: Response
+  ) {
     try {
-      const baseUrl = `${req.protocol}://${req.get('host')}`
-      const query = 'SELECT * FROM reportes_documentos ORDER BY id DESC'
+      const baseUrl =
+        `${req.protocol}://${req.get('host')}`
+
+      const query = `
+        SELECT *
+        FROM reportes_documentos
+        ORDER BY id DESC
+      `
+
       const [rows]: any = await db.execute(query)
 
-      const datosFormateados = rows.map((row: any) => 
-        crearMediaDTO({
-          telefono: row.telefono_usuario,
-          nombreArchivo: row.archivo,
-          tipoMensaje: row.tipo_mensaje as MediaDTOInput['tipoMensaje'],
-          leyendaTexto: row.nombre,
-          estado: row.estado,
-          respuesta: row.respuesta,
-          baseUrl
-        })
+      const datosFormateados = rows.map(
+        (row: any) => {
+          return crearMediaDTO({
+            telefono:
+              row.telefono_usuario ||
+              row.telefono ||
+              '',
+
+            nombreArchivo:
+              row.archivo ||
+              row.url_media ||
+              '',
+
+            tipoMensaje:
+              row.tipo_mensaje as MediaDTOInput['tipoMensaje'],
+
+            leyendaTexto:
+              row.nombre ||
+              'Archivo adjunto',
+
+            estado:
+              row.estado ||
+              'PENDIENTE',
+
+            respuesta:
+              row.respuesta ||
+              '',
+
+            baseUrl
+          })
+        }
       )
 
       return res.status(200).json({
+        success: true,
         mensaje: 'Datos obtenidos con éxito',
         datos: datosFormateados
       })
-    } catch (error) {
-      console.error('❌ Error en BringMultimedia:', error)
-      return res.status(500).json({ mensaje: 'No se encontró información multimedia' })
+
+    } catch (error: any) {
+      console.error(
+        '❌ Error en BringMultimedia:',
+        error
+      )
+
+      return res.status(500).json({
+        success: false,
+        mensaje:
+          'No se encontró información multimedia',
+        error: error.message
+      })
     }
   }
 
-  /**
-   * Actualiza la información de un registro multimedia.
-   *
-   * Permite modificar el estado y la respuesta asociada a un contenido multimedia previamente registrado.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Resultado de la actualización.
-   *
-   * @throws {Error} Cuando ocurre un error durante la actualización del registro.
-   */
-  static async updateMultimedia(req: Request, res: Response) {
+
+  // =========================================================
+  // 3. ACTUALIZAR ESTADO / RESPUESTA
+  // =========================================================
+  static async updateMultimedia(
+    req: Request,
+    res: Response
+  ) {
     try {
       const { id } = req.params
-      const { estado, respuesta } = req.body
 
-      const query = 'UPDATE reportes_documentos SET estado = ?, respuesta = ? WHERE id = ?'
-      await db.execute(query, [estado, respuesta, id])
+      const {
+        estado,
+        respuesta
+      } = req.body
 
-      return res.status(200).json({ mensaje: 'Contenido multimedia actualizado' })
-    } catch (error) {
-      console.error('❌ Error en updateMultimedia:', error)
-      return res.status(500).json({ mensaje: 'Error al actualizar contenido multimedia' })
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          mensaje:
+            'No se recibió el ID del registro'
+        })
+      }
+
+      const query = `
+        UPDATE reportes_documentos
+        SET
+          estado = ?,
+          respuesta = ?
+        WHERE id = ?
+      `
+
+      const [result]: any = await db.execute(
+        query,
+        [
+          estado,
+          respuesta,
+          id
+        ]
+      )
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          mensaje:
+            'Registro multimedia no encontrado'
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        mensaje:
+          'Contenido multimedia actualizado'
+      })
+
+    } catch (error: any) {
+      console.error(
+        '❌ Error en updateMultimedia:',
+        error
+      )
+
+      return res.status(500).json({
+        success: false,
+        mensaje:
+          'Error al actualizar contenido multimedia',
+        error: error.message
+      })
     }
   }
 
-  /**
-   * Elimina un registro multimedia del sistema.
-   *
-   * Remueve permanentemente el contenido multimedia asociado al identificador recibido en la solicitud.
-   *
-   * @async
-   * @static
-   * @param {Request} req Solicitud HTTP que contiene el identificador del registro.
-   * @param {Response} res Respuesta HTTP enviada al cliente.
-   * @returns {Promise<Response>} Resultado de la eliminación.
-   *
-   * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
-   */
-  static async deleteMultimedia(req: Request, res: Response) {
+
+  // =========================================================
+  // 4. ELIMINAR REGISTRO
+  // =========================================================
+  static async deleteMultimedia(
+    req: Request,
+    res: Response
+  ) {
     try {
       const { id } = req.params
-      const query = 'DELETE FROM reportes_documentos WHERE id = ?'
-      await db.execute(query, [id])
 
-      return res.status(200).json({ mensaje: 'Contenido multimedia eliminado' })
-    } catch (error) {
-      console.error('❌ Error en deleteMultimedia:', error)
-      return res.status(500).json({ mensaje: 'Error al eliminar contenido multimedia' })
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          mensaje:
+            'No se recibió el ID del registro'
+        })
+      }
+
+      const query = `
+        DELETE FROM reportes_documentos
+        WHERE id = ?
+      `
+
+      const [result]: any = await db.execute(
+        query,
+        [id]
+      )
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          mensaje:
+            'Registro multimedia no encontrado'
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        mensaje:
+          'Contenido multimedia eliminado'
+      })
+
+    } catch (error: any) {
+      console.error(
+        '❌ Error en deleteMultimedia:',
+        error
+      )
+
+      return res.status(500).json({
+        success: false,
+        mensaje:
+          'Error al eliminar contenido multimedia',
+        error: error.message
+      })
     }
   }
 }

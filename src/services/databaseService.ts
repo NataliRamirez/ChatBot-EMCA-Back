@@ -1,5 +1,6 @@
 import { db } from '../config/db.js'; 
 
+
 /**
  * @file databaseService.ts
  * @author Juan David Nieto
@@ -12,6 +13,7 @@ import { db } from '../config/db.js';
  *
  * Verifica la disponibilidad de la conexión MySQL al iniciar la aplicación y registra el resultado en consola.
  */
+
 db.getConnection()
     .then(connection => {
         console.log('✅ Conexión exitosa a la base de datos MySQL (Ecosistema Central)');
@@ -22,6 +24,10 @@ db.getConnection()
     });
 
 /**
+
+ * Guarda el mensaje directo en la DB de forma nativa.
+ * NO SE USA FETCH AQUÍ PORQUE ESTO YA ES EL BACKEND.
+
  * Guarda un mensaje enviado o recibido dentro del sistema.
  *
  * Registra la información del mensaje junto con el número telefónico, emisor y posibles botones de interacción.
@@ -34,6 +40,7 @@ db.getConnection()
  * @returns {Promise<object>} Resultado de la operación de almacenamiento.
  *
  * @throws {Error} Cuando ocurre un error durante el registro del mensaje.
+
  */
 export const guardarMensaje = async ( 
     telefono: string, 
@@ -49,6 +56,7 @@ export const guardarMensaje = async (
                 ] 
             ); return { success: true } };
 
+
 /**
  * Consulta la existencia de un usuario mediante su número telefónico.
  *
@@ -60,6 +68,7 @@ export const guardarMensaje = async (
  *
  * @throws {Error} Cuando ocurre un error durante la consulta.
  */
+
 export const checkUserInDB = async (telefono: string) => {
     try {
         const [rows]: any = await db.query(
@@ -73,6 +82,7 @@ export const checkUserInDB = async (telefono: string) => {
         return null; 
     }
 };
+
 
 /**
  * Registra o actualiza la información de un usuario.
@@ -88,6 +98,7 @@ export const checkUserInDB = async (telefono: string) => {
  *
  * @throws {Error} Cuando ocurre un error durante el proceso de inserción o actualización.
  */
+
 export const registrarUsuario = async (
     telefono: string,
     nombre: string,

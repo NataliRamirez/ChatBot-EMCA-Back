@@ -1,9 +1,10 @@
 import Express from 'express';
 import { bitacorasController } from '../controllers/bitacorasController.js';
 
-
 const bitacorasrouter= Express.Router();
 
+bitacorasrouter.get('/pdf', bitacorasController.generarPDF);
+bitacorasrouter.get('/excel', bitacorasController.descargarExcel);
 
 bitacorasrouter.get('/', bitacorasController.BringBitacoras);
 bitacorasrouter.post('/', bitacorasController.CreateBitacoras);
