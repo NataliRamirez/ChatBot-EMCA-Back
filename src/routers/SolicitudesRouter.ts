@@ -6,7 +6,6 @@ const Solicitudesrouter = Express.Router();
 Solicitudesrouter.get("/pdf", SolicitudesController.generarPDF);
 Solicitudesrouter.get("/excel", SolicitudesController.descargarExcel);
 
-
 Solicitudesrouter.post("/", SolicitudesController.CreateSolicitudes);
 Solicitudesrouter.get("/", SolicitudesController.BringSolicitudes);
 Solicitudesrouter.get("/:id", SolicitudesController.BringSolicitud);

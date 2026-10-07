@@ -1,63 +1,199 @@
 import { type Request, type Response } from 'express';
 import { db } from '../config/db.js';
 
-export class menuController{
-    static async createMenu(req:Request, res:Response){
-      try{
-          const {} = req.body;
+/**
+ * @file menuController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión del menú principal
+ * del sistema, permitiendo crear, consultar, actualizar y eliminar
+ * opciones de menú.
+ *
+ * Funcionalidades:
+ * - Creación de opciones de menú.
+ * - Consulta de opciones de menú.
+ * - Actualización de opciones de menú.
+ * - Eliminación de opciones de menú.
+ *
+ * @class menuController
+ */
+export class menuController {
 
-          const query = '';
+    /**
+     * Crea una nueva opción de menú en el sistema.
+     */
+    static async createMenu(req: Request, res: Response) {
+        try {
+            const {
+                nombre,
+                titulo,
+                estado
+            } = req.body;
 
-          await db.execute(query, {});
-          res.status(201).json({ menssaje: 'Menu creado con exito'});
-      }catch(error){
-        console.log(error);
-        res.status(500).json({ menssaje: 'Error al crear el menu'});
-      }
-    }
+            if (!nombre || !titulo || !estado) {
+                return res.status(400).json({
+                    mensaje: 'Nombre, título y estado son obligatorios'
+                });
+            }
 
-    static async BringMenu(req:Request, res:Response){
-        try{
-            const { nombre, titulo, estado } = req.body;
+            const query = `
+                INSERT INTO contenido_menu
+                (
+                    nombre,
+                    titulo,
+                    estado
+                )
+                VALUES (?, ?, ?)
+            `;
 
-            const query = 'SELECT nombre, titulo, estado FROM contenido_menu WHERE nombre = ?, titulo = ?, estado = ?';
+            await db.execute(query, [
+                nombre,
+                titulo,
+                estado
+            ]);
 
-            await db.execute(query, { nombre, titulo, estado });
-            
-            res.status(201).json({ menssaje: 'Menu traido con exito'});
-        }catch (error){
-            console.log(error);
-            res.status(500).json({ menssaje: 'Error al traer el menu'});
+            return res.status(201).json({
+                mensaje: 'Menú creado con éxito'
+            });
+
+        } catch (error) {
+            console.error('❌ Error al crear el menú:', error);
+
+            return res.status(500).json({
+                mensaje: 'Error al crear el menú'
+            });
         }
     }
 
-    static async updateMenu(req:Request, res:Response){
-        try{
-            const { nombre, titulo, estado } = req.body;
 
-            const query = 'UPDATE contenido_menu nombre = ?, titulo = ?, estado = ?';
+    /**
+     * Obtiene las opciones de menú registradas en el sistema.
+     */
+    static async BringMenu(req: Request, res: Response) {
+        try {
+            const query = `
+                SELECT
+                    id,
+                    nombre,
+                    titulo,
+                    estado
+                FROM contenido_menu
+                ORDER BY id DESC
+            `;
 
-            await db.execute(query,  { nombre, titulo, estado });
+            const [rows] = await db.execute(query);
 
-            res.status(201).json({ menssaje: 'Menu actualizado correctamente'});
-        }catch (error){
-            console.log(error);
-            res.status(500).json({ menssaje: 'Error al actualizar menu'});
+            return res.status(200).json({
+                mensaje: 'Menú obtenido con éxito',
+                datos: rows
+            });
+
+        } catch (error) {
+            console.error('❌ Error al traer el menú:', error);
+
+            return res.status(500).json({
+                mensaje: 'Error al traer el menú'
+            });
         }
     }
 
-    static async deleteMenu(req:Request, res:Response){
-        try{
-            const { nombre, titulo, estado } = req.body;
 
-            const query = 'DELETE contenido_menu nombre = ?, titulo = ?, estado = ?';
+    /**
+     * Actualiza una opción de menú existente.
+     */
+    static async updateMenu(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
 
-            await db.execute(query, { nombre, titulo, estado });
+            const {
+                nombre,
+                titulo,
+                estado
+            } = req.body;
 
-            res.status(500).json({ menssaje: 'El menu se elimino correctamente'});
-        }catch (error){
-            console.log(error);
-            res.status(500).json({ menssaje: 'Error al eliminar el menu'});
+            if (!id) {
+                return res.status(400).json({
+                    mensaje: 'No se recibió el ID del menú'
+                });
+            }
+
+            if (!nombre || !titulo || !estado) {
+                return res.status(400).json({
+                    mensaje: 'Nombre, título y estado son obligatorios'
+                });
+            }
+
+            const query = `
+                UPDATE contenido_menu
+                SET
+                    nombre = ?,
+                    titulo = ?,
+                    estado = ?
+                WHERE id = ?
+            `;
+
+            const [result]: any = await db.execute(query, [
+                nombre,
+                titulo,
+                estado,
+                id
+            ]);
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    mensaje: 'Menú no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                mensaje: 'Menú actualizado correctamente'
+            });
+
+        } catch (error) {
+            console.error('❌ Error al actualizar el menú:', error);
+
+            return res.status(500).json({
+                mensaje: 'Error al actualizar el menú'
+            });
+        }
+    }
+
+
+    /**
+     * Elimina una opción de menú del sistema.
+     */
+    static async deleteMenu(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({
+                    mensaje: 'No se recibió el ID del menú'
+                });
+            }
+
+            const query = `
+                DELETE FROM contenido_menu
+                WHERE id = ?
+            `;
+
+            const [result]: any = await db.execute(query, [id]);
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    mensaje: 'Menú no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                mensaje: 'El menú se eliminó correctamente'
+            });
+
+        } catch (error) {
+            console.error('❌ Error al eliminar el menú:', error);
+
+            return res.status(500).json({
+                mensaje: 'Error al eliminar el menú'
+            });
         }
     }
 }

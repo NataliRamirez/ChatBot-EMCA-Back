@@ -1,0 +1,27 @@
+src/Index.ts:316: new blank line at EOF.
+src/controllers/AdminController.ts:20: trailing whitespace.
+[32m+[m[32m     * Valida los datos recibidos, verifica que el correo electrónico no exista previamente, encripta la[m[41m [m
+src/controllers/AdminController.ts:78: trailing whitespace.
+[32m+[m[32m     * Verifica la existencia del administrador, valida la contraseña almacenada mediante bcrypt,[m[41m [m
+src/controllers/AyudaController.ts:11: trailing whitespace.
+[32m+[m[32m *[m[41m [m
+src/controllers/ComprobanteController.ts:14: trailing whitespace.
+[32m+[m[32m *[m[41m [m
+src/controllers/ConfiguracionController.ts:12: trailing whitespace.
+[32m+[m[32m *[m[41m [m
+src/controllers/auth.controller.ts:12: trailing whitespace.
+[32m+[m[32m *[m[41m [m
+src/controllers/auth.controller.ts:98: trailing whitespace.
+[32m+[m[32m     * Recibe los datos personales del usuario, encripta la contraseña utilizando bcrypt y almacena la[m[41m [m
+src/controllers/contenPrincipalController.ts:52: trailing whitespace.
+[32m+[m[41m   [m
+src/controllers/contenPrincipalController.ts:84: trailing whitespace.
+[32m+[m[41m   [m
+src/controllers/contenPrincipalController.ts:116: trailing whitespace.
+[32m+[m[41m  [m
+src/controllers/employeController.ts:13: trailing whitespace.
+[32m+[m[32m *[m[41m [m
+src/controllers/employeController.ts:53: trailing whitespace.
+[32m+[m[32m   * Valida los datos recibidos, verifica que el correo electrónico no se encuentre registrado previamente,[m[41m [m
+src/controllers/respuestasController.ts:140: trailing whitespace.
+[32m+[m[41m           [m

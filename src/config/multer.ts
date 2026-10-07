@@ -1,20 +1,19 @@
-import path from 'path'
-import { fileURLToPath } from 'url'
-import multer from 'multer'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename) // Apunta a backend/src/routers
-
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+const uploadDir = path.join(process.cwd(), 'uploads');
+// Crear carpeta 'uploads' si no existe
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Sube un nivel ('..') para salir de routers/ y entrar a src/uploads
-    const uploadPath = path.join(__dirname, '..', 'uploads')
-    cb(null, uploadPath)
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname)
-    cb(null, `file-${Date.now()}${ext}`)
-  }
-})
-
-export const upload = multer({ storage })
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    }
+});
+export const upload = multer({ storage });

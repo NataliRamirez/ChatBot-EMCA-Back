@@ -3,7 +3,36 @@ import { db } from "../config/db.js";
 import { AuthService } from "../services/authService.js";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 
+
+/**
+ * @file employeController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de empleados,
+ * incluyendo registro, autenticación, consulta, actualización
+ * y eliminación de usuarios del sistema.
+ * 
+ * Funcionalidades:
+ * - Consulta de empleados registrados.
+ * - Registro de nuevos empleados.
+ * - Autenticación de empleados.
+ * - Actualización de información de empleados.
+ * - Eliminación de empleados.
+ */
 export class employeController {
+
+   /**
+   * Obtiene el listado completo de empleados registrados.
+   *
+   * Consulta la información básica de todos los empleados almacenados en la base de datos.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP recibida por el servidor.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Listado de empleados registrados.
+   *
+   * @throws {Error} Cuando ocurre un error durante la consulta de empleados.
+   */
 
   static async getAllEmployes(req: Request, res: Response) {
     try {
@@ -16,6 +45,22 @@ export class employeController {
       return res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
     }
   }
+
+
+  /**
+   * Registra un nuevo empleado en el sistema.
+   *
+   * Valida los datos recibidos, verifica que el correo electrónico no se encuentre registrado previamente, 
+   * encripta la contraseña y almacena la información del empleado.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP con los datos del empleado.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado del proceso de registro.
+   *
+   * @throws {Error} Cuando ocurre un error durante el registro del empleado.
+   */
 
   static async createEmploye(req: Request, res: Response) {
     try {
@@ -56,6 +101,22 @@ export class employeController {
       return res.status(500).json({ mensaje: 'Error al registrar los datos en el servidor' });
     }
   }
+
+
+   /**
+   * Autentica un empleado dentro del sistema.
+   *
+   * Verifica la existencia del usuario, valida el estado de la cuenta y comprueba la contraseña mediante los
+   * servicios de autenticación antes de generar un token JWT.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP con las credenciales del empleado.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Token JWT e información básica del usuario autenticado.
+   *
+   * @throws {Error} Cuando ocurre un error durante la autenticación.
+   */
 
   static async login(req: Request, res: Response) {
     try {
@@ -106,6 +167,21 @@ export class employeController {
     }
   }
 
+
+   /**
+   * Actualiza la información de un empleado existente.
+   *
+   * Permite modificar los datos personales básicos de un empleado identificado por su id.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador y los nuevos datos.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la actualización.
+   *
+   * @throws {Error} Cuando ocurre un error durante la actualización del empleado.
+   */
+
   static async updateEmploye(req: Request, res: Response) {
     try {
       const { id } = req.params;
@@ -128,6 +204,21 @@ export class employeController {
       return res.status(500).json({ mensaje: 'No se pudieron actualizar los datos' });
     }
   }
+
+
+   /**
+   * Elimina un empleado del sistema.
+   *
+   * Remueve permanentemente el registro de un empleado identificado mediante su id.
+   *
+   * @async
+   * @static
+   * @param {Request} req Solicitud HTTP que contiene el identificador del empleado.
+   * @param {Response} res Respuesta HTTP enviada al cliente.
+   * @returns {Promise<Response>} Resultado de la eliminación.
+   *
+   * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+   */
 
   static async deleteEmploye(req: Request, res: Response) {
     try {

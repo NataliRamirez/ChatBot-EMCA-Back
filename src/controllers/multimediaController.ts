@@ -43,20 +43,13 @@ export class multimediaController {
       let tipoMedia = req.body.tipoMensaje || 'DOCUMENT'
 
       if (req.file?.mimetype) {
-
         if (req.file.mimetype.startsWith('image/')) {
           tipoMedia = 'IMAGEN'
-        }
-
-        else if (req.file.mimetype.startsWith('audio/')) {
+        } else if (req.file.mimetype.startsWith('audio/')) {
           tipoMedia = 'AUDIO'
-        }
-
-        else if (req.file.mimetype.startsWith('video/')) {
+        } else if (req.file.mimetype.startsWith('video/')) {
           tipoMedia = 'VIDEO'
-        }
-
-        else {
+        } else {
           tipoMedia = 'DOCUMENTO'
         }
       }
@@ -86,10 +79,13 @@ export class multimediaController {
       // -----------------------------------------------------
       // URL FINAL DEL ARCHIVO
       // -----------------------------------------------------
-      const urlCompleta = nombreArchivo.startsWith('http')
-        ? nombreArchivo
+      const urlCompleta = String(nombreArchivo).startsWith('http')
+        ? String(nombreArchivo)
         : `${baseUrl}/uploads/${nombreArchivo}`
 
+      // -----------------------------------------------------
+      // NOMBRE PARA MOSTRAR
+      // -----------------------------------------------------
       const nombreMostrar =
         req.body.nombre ||
         req.file?.originalname ||
@@ -98,7 +94,6 @@ export class multimediaController {
       // =====================================================
       // A. GUARDAR EN TABLA MENSAJES
       // =====================================================
-
       const queryMensaje = `
         INSERT INTO mensajes
         (
@@ -122,10 +117,9 @@ export class multimediaController {
       // =====================================================
       // B. CREAR DTO
       // =====================================================
-
       const mediaInput: MediaDTOInput = {
         telefono,
-        nombreArchivo,
+        nombreArchivo: String(nombreArchivo),
         tipoMensaje: tipoMensajeFinal,
         leyendaTexto: nombreMostrar,
         estado: req.body.estado || 'PENDIENTE',
@@ -138,20 +132,7 @@ export class multimediaController {
       // =====================================================
       // C. GUARDAR EN REPORTES_DOCUMENTOS
       // =====================================================
-      //
-      // IMPORTANTE:
-      // Esta parte depende de las columnas reales de
-      // reportes_documentos.
-      //
-      // Por eso intentamos primero con la estructura que
-      // normalmente utiliza este proyecto.
-      //
-      // Si la tabla no tiene telefono_usuario, fecha_creacion
-      // u otra columna, aquí aparecerá el error exacto.
-      // =====================================================
-
       try {
-
         const queryReporte = `
           INSERT INTO reportes_documentos
           (
@@ -177,22 +158,13 @@ export class multimediaController {
         ])
 
       } catch (reporteError: any) {
-
         console.error(
           '⚠️ Error guardando en reportes_documentos:',
           reporteError
         )
 
-        /*
-         * No detenemos el envío del archivo.
-         *
-         * El mensaje multimedia ya quedó guardado en
-         * la tabla mensajes.
-         *
-         * Devolvemos la información del error para poder
-         * identificar la columna incorrecta de
-         * reportes_documentos.
-         */
+        // El archivo ya quedó registrado en mensajes.
+        // No se pierde el registro del chat.
 
         return res.status(201).json({
           success: true,
@@ -215,7 +187,6 @@ export class multimediaController {
       // =====================================================
       // RESPUESTA FINAL
       // =====================================================
-
       return res.status(201).json({
         success: true,
 
@@ -235,7 +206,6 @@ export class multimediaController {
       })
 
     } catch (error: any) {
-
       console.error(
         '❌ Error en createMultimedia:',
         error
@@ -257,9 +227,7 @@ export class multimediaController {
     req: Request,
     res: Response
   ) {
-
     try {
-
       const baseUrl =
         `${req.protocol}://${req.get('host')}`
 
@@ -273,9 +241,7 @@ export class multimediaController {
 
       const datosFormateados = rows.map(
         (row: any) => {
-
           return crearMediaDTO({
-
             telefono:
               row.telefono_usuario ||
               row.telefono ||
@@ -290,13 +256,16 @@ export class multimediaController {
               row.tipo_mensaje as MediaDTOInput['tipoMensaje'],
 
             leyendaTexto:
-              row.nombre || 'Archivo adjunto',
+              row.nombre ||
+              'Archivo adjunto',
 
             estado:
-              row.estado || 'PENDIENTE',
+              row.estado ||
+              'PENDIENTE',
 
             respuesta:
-              row.respuesta || '',
+              row.respuesta ||
+              '',
 
             baseUrl
           })
@@ -304,34 +273,22 @@ export class multimediaController {
       )
 
       return res.status(200).json({
-
         success: true,
-
-        mensaje:
-          'Datos obtenidos con éxito',
-
-        datos:
-          datosFormateados
-
+        mensaje: 'Datos obtenidos con éxito',
+        datos: datosFormateados
       })
 
     } catch (error: any) {
-
       console.error(
         '❌ Error en BringMultimedia:',
         error
       )
 
       return res.status(500).json({
-
         success: false,
-
         mensaje:
           'No se encontró información multimedia',
-
-        error:
-          error.message
-
+        error: error.message
       })
     }
   }
@@ -344,9 +301,7 @@ export class multimediaController {
     req: Request,
     res: Response
   ) {
-
     try {
-
       const { id } = req.params
 
       const {
@@ -355,14 +310,10 @@ export class multimediaController {
       } = req.body
 
       if (!id) {
-
         return res.status(400).json({
-
           success: false,
-
           mensaje:
             'No se recibió el ID del registro'
-
         })
       }
 
@@ -374,7 +325,7 @@ export class multimediaController {
         WHERE id = ?
       `
 
-      await db.execute(
+      const [result]: any = await db.execute(
         query,
         [
           estado,
@@ -383,32 +334,31 @@ export class multimediaController {
         ]
       )
 
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          mensaje:
+            'Registro multimedia no encontrado'
+        })
+      }
+
       return res.status(200).json({
-
         success: true,
-
         mensaje:
           'Contenido multimedia actualizado'
-
       })
 
     } catch (error: any) {
-
       console.error(
         '❌ Error en updateMultimedia:',
         error
       )
 
       return res.status(500).json({
-
         success: false,
-
         mensaje:
           'Error al actualizar contenido multimedia',
-
-        error:
-          error.message
-
+        error: error.message
       })
     }
   }
@@ -421,20 +371,14 @@ export class multimediaController {
     req: Request,
     res: Response
   ) {
-
     try {
-
       const { id } = req.params
 
       if (!id) {
-
         return res.status(400).json({
-
           success: false,
-
           mensaje:
             'No se recibió el ID del registro'
-
         })
       }
 
@@ -443,37 +387,36 @@ export class multimediaController {
         WHERE id = ?
       `
 
-      await db.execute(
+      const [result]: any = await db.execute(
         query,
         [id]
       )
 
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          mensaje:
+            'Registro multimedia no encontrado'
+        })
+      }
+
       return res.status(200).json({
-
         success: true,
-
         mensaje:
           'Contenido multimedia eliminado'
-
       })
 
     } catch (error: any) {
-
       console.error(
         '❌ Error en deleteMultimedia:',
         error
       )
 
       return res.status(500).json({
-
         success: false,
-
         mensaje:
           'Error al eliminar contenido multimedia',
-
-        error:
-          error.message
-
+        error: error.message
       })
     }
   }

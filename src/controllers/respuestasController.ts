@@ -18,15 +18,47 @@ interface RespuestaRow extends RowDataPacket {
     fechaFinal?: string;
 }
 
+
+
+
+/**
+ * @file respuestasController.ts
+ * @author Juan David Nieto
+ * @description Controlador encargado de la gestión de respuestas del sistema, permitiendo crear, consultar, actualizar y eliminar respuestas almacenadas
+ * en la base de datos.
+ *
+ * Funcionalidades:
+ * - Consulta de respuestas.
+ * - Creación de respuestas.
+ * - Actualización de respuestas.
+ * - Eliminación de respuestas.
+ *
+ * @class respuestasController
+ */
 export class respuestasController {
 
+     /**
+     * Obtiene todas las respuestas registradas en el sistema.
+     *
+     * Consulta la información almacenada en la tabla respuestas y retorna los registros ordenados de forma descendente por ID.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP recibida por el servidor.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Listado de respuestas registradas.
+     *
+     * @throws {Error} Cuando ocurre un error durante la consulta a la base de datos.
+     */
     static async BringRespuestas(req: Request, res: Response) {
         try {
+
             const query = `
                 SELECT *
                 FROM respuestas
                 ORDER BY id DESC
             `;
+
 
             const [rows] = await db.execute<RespuestaRow[]>(query);
 
@@ -41,8 +73,24 @@ export class respuestasController {
         }
     }
 
+
+    /**
+     * Registra una nueva respuesta en el sistema.
+     *
+     * Valida que todos los campos obligatorios estén presentes antes de almacenar la información en la base de datos.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene los datos de la respuesta.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la operación de registro.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de inserción.
+     */
     static async CreateRespuestas(req: Request, res: Response) {
+
         try {
+
             const {
                 Nradicado,
                 titulo,
@@ -62,6 +110,7 @@ export class respuestasController {
                 !nombre ||
                 !telefono ||
                 !telefonoEmpresa ||
+                !telefonoEmpresa||
                 !tipoRespuesta ||
                 !estados ||
                 !descripcion ||
@@ -88,6 +137,9 @@ export class respuestasController {
                 fechaFinal
             ]);
 
+           
+
+            await db.execute(query, [Nradicado, titulo, nombre, telefono, telefonoEmpresa, tipoRespuesta, estados, descripcion, fechaInicio, fechaFinal ]);
             return res.status(201).json({
                 mensaje: "Respuesta creada correctamente."
             });
@@ -99,29 +151,29 @@ export class respuestasController {
         }
     }
 
+    /**
+     * Actualiza una respuesta existente.
+     *
+     * Modifica la información de una respuesta previamente registrada utilizando el identificador recibido como parámetro.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID y los nuevos datos.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la actualización.
+     *
+     * @throws {Error} Cuando ocurre un error durante la actualización de la información.
+     */
     static async UpdateRespuestas(req: Request, res: Response) {
+
         try {
+
             const { id } = req.params;
-            const idNumerico = Number(id);
 
-            if (isNaN(idNumerico)) {
-                return res.status(400).json({ mensaje: "ID no válido." });
-            }
-
-            const { Nradicado, titulo, nombre, telefono, telefonoEmpresa, tipoRespuesta, estados, descripcion, fechaInicio, fechaFinal } = req.body;
+            const { Nradicado, titulo, nombre,  telefono, telefonoEmpresa, tipoRespuesta, estados, descripcion, fechaInicio, fechaFinal } = req.body;
 
             const query = `UPDATE respuestas SET Nradicado = ?, titulo = ?, nombre = ?, telefono = ?, telefonoEmpresa = ?, tipoRespuesta = ?, estados = ?, descripcion = ?, fechaInicio = ?, fechaFinal = ? WHERE id = ?`;
-            
-            const [result] = await db.execute<ResultSetHeader>(query, [
-                Nradicado, titulo, nombre, telefono, telefonoEmpresa, tipoRespuesta, estados, descripcion, fechaInicio, fechaFinal, idNumerico
-            ]);
-
-            if (result.affectedRows === 0) {
-                return res.status(404).json({
-                    mensaje: "Respuesta no encontrada."
-                });
-            }
-
+            await db.execute(query, [ Nradicado, titulo, nombre, telefono, telefonoEmpresa, tipoRespuesta, estados, descripcion, fechaInicio, fechaFinal, id ]);
             return res.status(200).json({
                 mensaje: "Respuesta actualizada correctamente."
             });
@@ -133,25 +185,29 @@ export class respuestasController {
         }
     }
 
+    /**
+     * Elimina una respuesta registrada en el sistema.
+     *
+     * Realiza la eliminación permanente de una respuesta utilizando el identificador recibido en la solicitud.
+     *
+     * @async
+     * @static
+     * @param {Request} req Solicitud HTTP que contiene el ID de la respuesta.
+     * @param {Response} res Respuesta HTTP enviada al cliente.
+     * @returns {Promise<Response>} Resultado de la eliminación.
+     *
+     * @throws {Error} Cuando ocurre un error durante el proceso de eliminación.
+     */
     static async DeleteRespuestas(req: Request, res: Response) {
+
         try {
+
             const { id } = req.params;
-            const idNumerico = Number(id);
 
-            if (isNaN(idNumerico)) {
-                return res.status(400).json({ mensaje: "ID no válido." });
-            }
-
-            const [result] = await db.execute<ResultSetHeader>(
+            await db.execute(
                 "DELETE FROM respuestas WHERE id = ?",
-                [idNumerico]
+                [id]
             );
-
-            if (result.affectedRows === 0) {
-                return res.status(404).json({
-                    mensaje: "Respuesta no encontrada."
-                });
-            }
 
             return res.status(200).json({
                 mensaje: "Respuesta eliminada correctamente."
@@ -163,6 +219,7 @@ export class respuestasController {
             });
         }
     }
+
 
     static async generarPDF(req: Request, res: Response) {
         try {
@@ -311,4 +368,5 @@ export class respuestasController {
             if (!res.headersSent) res.status(500).json({ mensaje: 'Error al generar la hoja de Excel' });
         }
     }
+
 }
