@@ -44,12 +44,179 @@ export class informeController {
   /**
    * Crea un nuevo informe en el sistema.
    */
-  static async createInforme(
-    req: Request,
-    res: Response
-  ): Promise<void> {
-    try {
-      const {
+
+// =========================================================
+// 1. CREAR INFORME
+// =========================================================
+
+static async createInforme(
+  req: Request,
+  res: Response
+): Promise<void> {
+
+  try {
+
+    console.log('==========================================');
+    console.log('📄 CREANDO INFORME');
+    console.log('📦 Body recibido:', req.body);
+    console.log('👤 Usuario autenticado:', (req as any).user);
+    console.log('==========================================');
+
+    const {
+      empleado_id,
+      empleado_nombre,
+      nombre,
+      tipo,
+      respuesta,
+      fechaInicio,
+      fechaFin,
+      estado
+    } = req.body;
+
+
+    // =========================================================
+    // OBTENER ID DEL EMPLEADO
+    // =========================================================
+
+    const usuario = (req as any).user;
+
+    const idEmpleadoFinal =
+      empleado_id ??
+      usuario?.empleado_id ??
+      usuario?.id_empleado ??
+      usuario?.id ??
+      null;
+
+
+    console.log('🆔 ID recibido en empleado_id:', empleado_id);
+    console.log('🆔 ID encontrado en req.user:', usuario?.id);
+    console.log('🆔 ID FINAL:', idEmpleadoFinal);
+
+
+    // =========================================================
+    // OBTENER NOMBRE DEL EMPLEADO
+    // =========================================================
+
+    const nombreEmpleadoRecibido =
+      empleado_nombre ??
+      usuario?.empleado_nombre ??
+      usuario?.nombre ??
+      null;
+
+
+    console.log(
+      '👤 Nombre empleado:',
+      nombreEmpleadoRecibido
+    );
+
+
+    // =========================================================
+    // VALIDAR ID
+    // =========================================================
+
+    if (
+      idEmpleadoFinal === null ||
+      idEmpleadoFinal === undefined ||
+      idEmpleadoFinal === '' ||
+      Number(idEmpleadoFinal) <= 0
+    ) {
+
+      console.error(
+        '❌ NO SE ENCONTRÓ EL ID DEL EMPLEADO'
+      );
+
+      res.status(400).json({
+        success: false,
+        error:
+          'No se pudo identificar al empleado. Debe enviarse empleado_id.'
+      });
+
+      return;
+    }
+
+
+    // =========================================================
+    // CONVERTIR ID A NÚMERO
+    // =========================================================
+
+    const idEmpleado = Number(idEmpleadoFinal);
+
+
+    // =========================================================
+    // VERIFICAR QUE EL EMPLEADO EXISTA
+    // =========================================================
+
+    const [empleadoExiste] =
+      await db.execute<RowDataPacket[]>(
+        `
+          SELECT
+            id,
+            nombre
+          FROM empleados
+          WHERE id = ?
+        `,
+        [idEmpleado]
+      );
+
+
+    if (empleadoExiste.length === 0) {
+
+      console.error(
+        `❌ El empleado ${idEmpleado} no existe`
+      );
+
+      res.status(404).json({
+        success: false,
+        error:
+          `El empleado con ID ${idEmpleado} no existe en la base de datos.`
+      });
+
+      return;
+    }
+
+
+    // =========================================================
+    // DEFINIR NOMBRE DEFINITIVO
+    // =========================================================
+
+    const nombreDefinitivo =
+      nombreEmpleadoRecibido ||
+      empleadoExiste[0].nombre ||
+      'Empleado Indefinido';
+
+
+    // =========================================================
+    // VALORES DEL INFORME
+    // =========================================================
+
+    const nombreInforme =
+      nombre?.trim() || 'Sin Nombre';
+
+    const tipoInforme =
+      tipo?.trim() || 'General';
+
+    const respuestaInforme =
+      respuesta?.trim() || '';
+
+    const fechaInicioInforme =
+      fechaInicio ||
+      new Date().toISOString().split('T')[0];
+
+    const fechaFinInforme =
+      fechaFin ||
+      new Date().toISOString().split('T')[0];
+
+    const estadoInforme =
+      estado?.trim() || 'Pendiente';
+
+
+    // =========================================================
+    // INSERTAR INFORME
+    // =========================================================
+
+    const query = `
+      INSERT INTO reporte_informes
+      (
         empleado_id,
         empleado_nombre,
         nombre,
@@ -58,162 +225,107 @@ export class informeController {
         fechaInicio,
         fechaFin,
         estado
-      } = req.body;
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-      // -------------------------------------------------------
-      // OBTENER DATOS DEL EMPLEADO
-      // -------------------------------------------------------
 
-      const idEmpleadoFinal =
-        empleado_id ||
-        (req as any).user?.id ||
-        (req as any).user?.id_empleado;
+    const values = [
+      idEmpleado,
+      nombreDefinitivo,
+      nombreInforme,
+      tipoInforme,
+      respuestaInforme,
+      fechaInicioInforme,
+      fechaFinInforme,
+      estadoInforme
+    ];
 
-      const nombreEmpleadoRecibido =
-        empleado_nombre ||
-        (req as any).user?.nombre;
 
-      // -------------------------------------------------------
-      // VALIDAR ID DEL EMPLEADO
-      // -------------------------------------------------------
+    console.log('==========================================');
+    console.log('💾 INSERTANDO INFORME');
+    console.log('Valores:', values);
+    console.log('==========================================');
 
-      if (!idEmpleadoFinal) {
-        res.status(400).json({
-          error:
-            'El ID del empleado (empleado_id) es obligatorio para registrar el informe.'
-        });
 
-        return;
-      }
-
-      // -------------------------------------------------------
-      // VERIFICAR QUE EL EMPLEADO EXISTA
-      // -------------------------------------------------------
-
-      const [empleadoExiste] =
-        await db.execute<RowDataPacket[]>(
-          `
-            SELECT
-              id,
-              nombre
-            FROM empleados
-            WHERE id = ?
-          `,
-          [idEmpleadoFinal]
-        );
-
-      if (empleadoExiste.length === 0) {
-        res.status(404).json({
-          error:
-            `El empleado con ID ${idEmpleadoFinal} no existe en la base de datos.`
-        });
-
-        return;
-      }
-
-      // -------------------------------------------------------
-      // DEFINIR NOMBRE DEL EMPLEADO
-      // -------------------------------------------------------
-
-      const nombreDefinitivo =
-        nombreEmpleadoRecibido ||
-        empleadoExiste[0].nombre ||
-        'Empleado Indefinido';
-
-      // -------------------------------------------------------
-      // VALORES POR DEFECTO
-      // -------------------------------------------------------
-
-      const nombreInforme =
-        nombre || 'Sin Nombre';
-
-      const tipoInforme =
-        tipo || 'General';
-
-      const respuestaInforme =
-        respuesta || '';
-
-      const fechaInicioInforme =
-        fechaInicio ||
-        new Date().toISOString().split('T')[0];
-
-      const fechaFinInforme =
-        fechaFin ||
-        new Date().toISOString().split('T')[0];
-
-      const estadoInforme =
-        estado || 'Pendiente';
-
-      // -------------------------------------------------------
-      // INSERTAR INFORME
-      // -------------------------------------------------------
-
-      const query = `
-        INSERT INTO reporte_informes
-        (
-          empleado_id,
-          empleado_nombre,
-          nombre,
-          tipo,
-          respuesta,
-          fechaInicio,
-          fechaFin,
-          estado
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const values = [
-        idEmpleadoFinal,
-        nombreDefinitivo,
-        nombreInforme,
-        tipoInforme,
-        respuestaInforme,
-        fechaInicioInforme,
-        fechaFinInforme,
-        estadoInforme
-      ];
-
-      const [result] =
-        await db.execute<ResultSetHeader>(
-          query,
-          values
-        );
-
-      res.status(201).json({
-        success: true,
-        message: 'Informe creado correctamente',
-        id: result.insertId
-      });
-
-    } catch (error: any) {
-      console.error(
-        '❌ Error al crear informe:',
-        error
+    const [result] =
+      await db.execute<ResultSetHeader>(
+        query,
+        values
       );
 
-      // -------------------------------------------------------
-      // ERROR DE CLAVE FORÁNEA
-      // -------------------------------------------------------
 
-      if (
-        error?.code === 'ER_NO_REFERENCED_ROW_2' ||
-        error?.errno === 1452
-      ) {
-        res.status(400).json({
-          error:
-            'El ID de empleado ingresado no se encuentra en la base de datos.'
-        });
+    // =========================================================
+    // RESPUESTA
+    // =========================================================
 
-        return;
-      }
+    console.log(
+      '✅ Informe creado. ID:',
+      result.insertId
+    );
 
-      res.status(500).json({
+
+    res.status(201).json({
+
+      success: true,
+
+      message:
+        'Informe creado correctamente',
+
+      id:
+        result.insertId
+
+    });
+
+
+  } catch (error: any) {
+
+    console.error(
+      '❌ ERROR AL CREAR INFORME:',
+      error
+    );
+
+
+    // =========================================================
+    // ERROR DE CLAVE FORÁNEA
+    // =========================================================
+
+    if (
+      error?.code === 'ER_NO_REFERENCED_ROW_2' ||
+      error?.errno === 1452
+    ) {
+
+      res.status(400).json({
+
+        success: false,
+
         error:
-          'Error interno del servidor al crear el informe'
+          'El ID del empleado ingresado no existe en la base de datos.'
+
       });
+
+      return;
     }
+
+
+    // =========================================================
+    // ERROR GENERAL
+    // =========================================================
+
+    res.status(500).json({
+
+      success: false,
+
+      error:
+        'Error interno del servidor al crear el informe',
+
+      detalle:
+        error?.message || 'Error desconocido'
+
+    });
+
   }
+}
 
 
   // =========================================================
@@ -633,19 +745,15 @@ export class informeController {
         // INFORMACIÓN EMCA
         // -----------------------------------------------------
 
-        doc
-          .fontSize(14)
-          .font('Helvetica-Bold')
-          .fillColor('#000000')
-          .text(
-            'EMCA E.S.P.',
-            50,
-            50,
-            {
-              width: 120,
-              align: 'center'
-            }
-          );
+         doc.image(
+                  "public/logo.png",
+                      50,
+                      38,
+                    {
+                      width: 100,
+                      height: 50
+                     }
+                );
 
         doc
           .fontSize(11)
@@ -697,22 +805,27 @@ export class informeController {
             56
           );
 
-        doc
-          .font('Helvetica-Bold')
-          .text(
-            'Vigente desde:',
-            385,
-            76
-          );
+          const fechaCreacion = new Date().toLocaleDateString("es-CO", {
+               day: "2-digit",
+               month: "2-digit",
+               year: "numeric"
+           });
 
-        doc
-          .font('Helvetica')
-          .text(
-            '2023-12-14',
-            480,
-            76
-          );
+              doc
+               .font("Helvetica-Bold")
+               .text(
+                "Fecha creación:",
+                 385,
+                 76
+                   );
 
+            doc
+               .font("Helvetica")
+               .text(
+                fechaCreacion,
+                480,
+                76
+             );
         // -----------------------------------------------------
         // NÚMERO DE PÁGINA
         // -----------------------------------------------------
@@ -748,10 +861,10 @@ export class informeController {
           .fillColor('#555555')
           .text(
             `EMPRESAS PÚBLICAS DE CALARCÁ E.S.P NIT 890 000 377 - 0
-Carrera 24 No. 39-54 Teléfonos:(57) 3156127130
-Sitios WEB: ww.emca-calarca-quindio-gov.co
-E-mail: notificacionesjudiciales@emca-calarca-quindio.gov.co;
-contactenos@emca-calarca-quindio.gov.co`,
+             Carrera 24 No. 39-54 Teléfonos:(57) 3156127130
+             Sitios WEB: ww.emca-calarca-quindio-gov.co
+             E-mail: notificacionesjudiciales@emca-calarca-quindio.gov.co;
+             contactenos@emca-calarca-quindio.gov.co`,
             40,
             footerY,
             {

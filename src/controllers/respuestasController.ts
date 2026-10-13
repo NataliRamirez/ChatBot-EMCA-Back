@@ -282,15 +282,22 @@ export class respuestasController {
                 doc.moveTo(380, 50).lineTo(555, 50).stroke('#000000');
                 doc.moveTo(380, 70).lineTo(555, 70).stroke('#000000');
 
-                doc.fontSize(14).font('Helvetica-Bold').fillColor('#000000').text('EMCA E.S.P.', 50, 50, { width: 120, align: 'center' });
+                 doc.image("public/logo.png", 50, 38, { width: 100, height: 50} );
                 doc.fontSize(11).font('Helvetica-Bold').text('REPORTE RESPUESTAS', 185, 45, { width: 190, align: 'center' });
 
                 doc.fontSize(8).font('Helvetica-Bold').text('Versión:', 385, 36);
                 doc.font('Helvetica').text('2', 480, 36);
                 doc.font('Helvetica-Bold').text('Código:', 385, 56);
                 doc.font('Helvetica').text('F-GA-028', 480, 56);
-                doc.font('Helvetica-Bold').text('Vigente desde:', 385, 76);
-                doc.font('Helvetica').text('2023-12-14', 480, 76);
+                const fechaCreacion = new Date().toLocaleDateString("es-CO", {
+               day: "2-digit",
+               month: "2-digit",
+               year: "numeric"
+           });
+
+                doc.font("Helvetica-Bold").text("Fecha creación:",385, 76);
+                doc.font("Helvetica").text(fechaCreacion, 480, 76 );
+
 
                 doc.text(`Hoja ${i + 1} de ${range.count}`, 420, 98, { align: 'right' });
                 doc.moveTo(40, 112).lineTo(555, 112).stroke('#CCCCCC');
