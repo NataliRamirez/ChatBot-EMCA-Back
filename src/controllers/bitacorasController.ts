@@ -517,19 +517,15 @@ export class bitacorasController {
                     .lineTo(555, 70)
                     .stroke("#000000");
 
-                doc
-                    .fontSize(14)
-                    .font("Helvetica-Bold")
-                    .fillColor("#000000")
-                    .text(
-                        "EMCA E.S.P.",
-                        50,
-                        50,
-                        {
-                            width: 120,
-                            align: "center"
-                        }
-                    );
+                doc.image(
+                        "public/logo.png",
+                         50,
+                         38,
+                       {
+                        width: 100,
+                        height: 50
+                     }
+                  );
 
                 doc
                     .fontSize(11)
@@ -577,21 +573,27 @@ export class bitacorasController {
                         56
                     );
 
-                doc
-                    .font("Helvetica-Bold")
-                    .text(
-                        "Vigente desde:",
-                        385,
-                        76
-                    );
+                 const fechaCreacion = new Date().toLocaleDateString("es-CO", {
+               day: "2-digit",
+               month: "2-digit",
+               year: "numeric"
+           });
 
-                doc
-                    .font("Helvetica")
-                    .text(
-                        "2023-12-14",
-                        480,
-                        76
-                    );
+              doc
+               .font("Helvetica-Bold")
+               .text(
+                "Fecha creación:",
+                 385,
+                 76
+                   );
+
+            doc
+               .font("Helvetica")
+               .text(
+                fechaCreacion,
+                480,
+                76
+             );
 
                 doc
                     .font("Helvetica")
@@ -627,9 +629,9 @@ export class bitacorasController {
                     .fillColor("#555555")
                     .text(
                         `EMPRESAS PÚBLICAS DE CALARCÁ E.S.P NIT 890 000 377 - 0
-Carrera 24 No. 39-54 Teléfonos:(57) 3156127130
-Sitios WEB: www.emca-calarca-quindio-gov.co
-E-mail: contactenos@emca-calarca-quindio.gov.co`,
+                         Carrera 24 No. 39-54 Teléfonos:(57) 3156127130
+                         Sitios WEB: www.emca-calarca-quindio-gov.co
+                         E-mail: contactenos@emca-calarca-quindio.gov.co`,
                         40,
                         footerY,
                         {

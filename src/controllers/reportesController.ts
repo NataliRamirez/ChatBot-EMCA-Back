@@ -270,7 +270,7 @@ static async generarPDF(req: Request, res: Response): Promise<void> {
     doc.moveTo(380, 50).lineTo(555, 50).stroke('#000000');
     doc.moveTo(380, 70).lineTo(555, 70).stroke('#000000');
 
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000000').text('EMCA E.S.P.', 50, 50, { width: 120, align: 'center' });
+doc.image("public/logo.png", 50, 38, { width: 100, height: 50});
     doc.fontSize(10).font('Helvetica-Bold').text('REPORTES BITÁCORAS', 185, 45, { width: 190, align: 'center' });
 
     doc.fontSize(8).font('Helvetica-Bold').text('Versión:', 385, 36);
